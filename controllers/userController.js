@@ -4,10 +4,10 @@ const jwt = require('jsonwebtoken')
 
 module.exports ={
     postSignup:async(req,res)=>{
-        let userSignup ={
-            Status :false,
-            message :null
-        }
+        // let userSignup ={
+        //     Status :false,
+        //     message :null
+        // }
         
         let {username,email,password,mobile} = req.body
         console.log(req.body.password);
@@ -23,7 +23,7 @@ module.exports ={
                     password:password1,
                     mobile:mobile
                 }).then((data)=>{
-                    userSignup.Status = true,
+                    // userSignup.Status = true,
                     res.status(200).json({status:true})
                 })
             }else{

@@ -27,6 +27,10 @@ const organizerSchema = new mongoose.Schema({
     },
     services:{
         type:Array
+    },
+    event:{
+        type:String,
+        default:true
     }
 
 

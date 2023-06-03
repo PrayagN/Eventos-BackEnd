@@ -2,7 +2,7 @@ const CORS = require("cors");
 const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser");
-
+const path = require('path')
 // Importing route files
 const adminRoute = require("./routes/adminRoute");
 const userRoute = require("./routes/userRoute");
@@ -26,7 +26,8 @@ app.use(
     })
 );
 app.use(express.json());
-
+app.use(express.static(path.join(__dirname,'public')))
+app.use('/public/eventsPhotos', express.static(path.join(__dirname, 'public/eventsPhotos')));
 // Routes
 app.use('/', userRoute);
 app.use('/admin', adminRoute);
