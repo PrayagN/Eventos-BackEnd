@@ -3,19 +3,22 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Events = require("../models/eventModel");
 
+
 module.exports = {
-  checkExist: async (req, res) => {
+  organizerAuth: async (req, res) => {
     try {
-      console.log(req.body);
-      let email = req.body.email;
-      let exist = await Organizer.findOne({ email });
-      if (exist) {
-        res.json({ message: "email already exists" });
+      let organizerData = await Organizer.findById(req.organizerId);
+    
+      if (organizerData) {
+        const organizerdetails = {
+          email: organizerData.email,
+        };
+        res.json({ auth: true, result: organizerdetails, status: 'success', message: 'Signin success' });
       } else {
-        res.json({ status: true });
+        res.json({ auth: false, message: 'Organizer not found', status: 'error' });
       }
     } catch (error) {
-      res.json({ message: error });
+      res.json({ auth: false, message: error.message, status: 'error' });
     }
   },
   postSignup: async (req, res) => {
@@ -57,7 +60,7 @@ module.exports = {
         if (passwordMatch) {
           console.log("h");
           const organizerName = organizerData.organizerName;
-          let token = jwt.sign({ id: organizerData._id }, "secretCodeforUSer", {
+          let token = jwt.sign({ id: organizerData._id }, process.env.JWT_SECRET_KEY, {
             expiresIn: "30d",
           });
           res.json({
@@ -90,4 +93,50 @@ module.exports = {
       res.json({ status: false, message: error });
     }
   },
+  profile : async(req,res)=>{
+    try {
+      const _id = req.organizer_id
+      const profile  = await Organizer.find(_id)
+      console.log(profile);
+      res.json({profile})
+    } catch (error) {
+      res.json({message:error})
+    }
+  },
+  updateProfile: async (req, res) => {
+    try {
+      const { organizerName, email, mobile, venue, budget, capacity, district, state, description,services } = req.body;
+      const profileData = await Organizer.findById(req.organizerId);
+  
+      if (profileData) {
+        await Organizer.findByIdAndUpdate(req.organizerId, {
+          organizerName,
+          email,
+          mobile,
+          venue,
+          budget,
+          capacity,
+          district,
+          state,
+          description,
+          service:services
+        });
+  
+        res.json({ status: true, message: "Profile updated successfully!",service:profileData.service });
+      } else {
+        res.json({ status: false, message: "Profile not found" });
+      }
+    } catch (error) {
+      res.json({ status: false, message: error.message });
+    }
+  },
+  loadOrganizers:async(req,res)=>{
+    try {
+      const organizers = await Organizer.find({})
+      res.json({organizers})
+    } catch (error) {
+      res.json({message:error})
+    }
+  }
+  
 };

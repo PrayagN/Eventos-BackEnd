@@ -14,6 +14,7 @@ module.exports.adminProtect = async (req, res, next) => {
         } else {
         
           req.adminId = decoded.id;
+         
           next();
         }
       });
@@ -38,6 +39,7 @@ module.exports.organizerProtect = async (req, res, next) => {
         } else {
         
           req.organizerId = decoded.id;
+          
           next();
         }
       });

@@ -43,7 +43,7 @@ module.exports ={
             if(passwordMatch){
                 console.log('h');
                 const username = userData.username
-                let token = jwt.sign({id:userData._id},'secretCodeforUSer',{expiresIn:'5d'})
+                let token = jwt.sign({id:userData._id},process.env.JWT_SECRET_KEY,{expiresIn:'5d'})
                 res.json({message:"Login Successful",status:true,token,username})
             }else{
                 res.json({message:'password is incorrect',status:false})
@@ -56,4 +56,5 @@ module.exports ={
         res.json({message:'something gone wrong',status:false})
     }
 }
+
 }

@@ -2,6 +2,8 @@ const Admin = require('../models/adminModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Event = require('../models/eventModel')
+const Organizers =require('../models/organizerModel')
+const User = require('../models/userModel')
 module.exports = {
   postSignin: async (req, res) => {
     try {
@@ -30,23 +32,24 @@ module.exports = {
         const admindetails = {
           email: adminData.email,
         };
+        
         res.json({ auth: true, result: admindetails, status: 'success', message: 'Signin success' });
+  
       } else {
-        res.status(404).json({ auth: false, message: 'Admin not found', status: 'error' });
+        res.json({ auth: false, message: 'Admin not found', status: 'error' });
       }
     } catch (error) {
-      res.status(400).json({ auth: false, message: error.message, status: 'error' });
+      res.json({ auth: false, message: error.message, status: 'error' });
     }
   },
   addEvents:async(req,res)=>{
     try {
-      console.log(req.body.formData,'df');
+    
       if(req.file && req.file.path){
-      //  const date = Date().slice(0,15);
         Event.create({
           title:req.body.title,
           image:req.file.filename,
-          // date:date
+          
         }).then((data)=>{
           res.json({status:true,message:'Event added successfully'})
         })
@@ -60,11 +63,29 @@ module.exports = {
   loadEvents:async(req,res)=>{
     try {
         const events = await Event.find({})
-        console.log(events,'kiti');
+        
         res.json({events})
     } catch (error) {
       res.json({message:error})
     }
+  },
+  listOrganizers:async(req,res)=>{
+    try {
+      const organizers = await Organizers.find({})
+      res.json({organizers})
+    } catch (error) {
+      res.json({message:error})
+    }
+  },
+  listCustomers:async(req,res)=>{
+    try {
+      const customers = await User.find({})
+      res.json({customers})
+    } catch (error) {
+      res.json({message:error})
+    }
   }
+
+  
 
 };

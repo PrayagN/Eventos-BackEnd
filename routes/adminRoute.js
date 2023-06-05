@@ -3,6 +3,7 @@ const path = require('path');
 const adminRoute = express.Router();
 const adminController = require('../controllers/adminController');
 const { adminProtect } = require('../middleware/Auth');
+
 const multer = require('multer');
 
 const storage = multer.diskStorage({
@@ -16,9 +17,11 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
-adminRoute.get('/isAdminAuth', adminProtect, adminController.adminAuth);
+adminRoute.get('/isAdminAuth',adminProtect, adminController.adminAuth);
 adminRoute.post('/signin', adminController.postSignin);
 adminRoute.post('/addEvents', adminProtect, upload.single('image'), adminController.addEvents);
 adminRoute.get('/events',adminProtect,adminController.loadEvents)
+adminRoute.get('/listOrganizers',adminProtect,adminController.listOrganizers)
+adminRoute.get('/listCustomers',adminProtect,adminController.listCustomers)
 
 module.exports = adminRoute;

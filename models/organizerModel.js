@@ -16,7 +16,7 @@ const organizerSchema = new mongoose.Schema({
         type:String,
         required:true
     },
-    photos:{
+    images:{
         type:String
     },
     district:{
@@ -25,17 +25,37 @@ const organizerSchema = new mongoose.Schema({
     state:{
         type:String
     },
-    services:{
+    service:{
         type:Array
     },
     event:{
         type:String,
         default:true
+    },
+    venue:{
+        type:String,
+
+    },
+    description:{
+        type:String
+    },
+    logo:{
+        type:String
+    },
+    budget:{
+        type:Number
+    },
+    capacity:{
+        type:Number
+    },
+    is_Approved:{
+        type:Number,
+        default:false
     }
 
 
     
 
-})
+}, { timestamps: true },);
 
 module.exports = mongoose.model('Organizer',organizerSchema)
