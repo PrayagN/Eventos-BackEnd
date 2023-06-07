@@ -7,7 +7,7 @@ const Events = require("../models/eventModel");
 module.exports = {
   organizerAuth: async (req, res) => {
     try {
-      let organizerData = await Organizer.findById(req.organizerId);
+      let organizerData = await Organizer.findById(req.organizer_Id);
     
       if (organizerData) {
         const organizerdetails = {
@@ -95,8 +95,10 @@ module.exports = {
   },
   profile : async(req,res)=>{
     try {
-      const _id = req.organizer_id
-      const profile  = await Organizer.find(_id)
+     console.log(req.organizer_Id,'a');
+     const organizer_Id =req.organizer_Id
+      const profile  = await Organizer.findById(organizer_Id)
+    
       console.log(profile);
       res.json({profile})
     } catch (error) {
@@ -105,11 +107,13 @@ module.exports = {
   },
   updateProfile: async (req, res) => {
     try {
-      const { organizerName, email, mobile, venue, budget, capacity, district, state, description,services } = req.body;
-      const profileData = await Organizer.findById(req.organizerId);
-  
+      console.log(req.body);
+      const organizer_Id =req.organizer_Id
+      const { organizerName, email, mobile, venue, budget, capacity, district, state, description,services,imageUrl } = req.body;
+      let profileData = await Organizer.findById(organizer_Id);
+     let newImages = profileData.images.concat(imageUrl)
       if (profileData) {
-        await Organizer.findByIdAndUpdate(req.organizerId, {
+        await Organizer.findByIdAndUpdate(organizer_Id, {
           organizerName,
           email,
           mobile,
@@ -119,7 +123,8 @@ module.exports = {
           district,
           state,
           description,
-          service:services
+          service:services,
+          images:newImages
         });
   
         res.json({ status: true, message: "Profile updated successfully!",service:profileData.service });
