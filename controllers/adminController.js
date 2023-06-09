@@ -3,7 +3,9 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Event = require('../models/eventModel')
 const Organizers =require('../models/organizerModel')
-const User = require('../models/userModel')
+const User = require('../models/userModel');
+
+
 module.exports = {
   postSignin: async (req, res) => {
     try {
@@ -84,7 +86,41 @@ module.exports = {
     } catch (error) {
       res.json({message:error})
     }
-  }
+  },
+  viewOrganizer:async(req,res)=>{
+    try {
+      console.log(req.body);
+      const {id} = req.body
+      const organizer = await Organizers.findById(id)  
+      console.log(organizer);
+      if(organizer){
+        res.status(200).json({status:true,organizer})
+      }else{
+        res.status(401).json({status:false,message:'something went wrong'})
+      }
+    } catch (error) {
+      res.json({message:error})
+    }
+  },
+  acceptOrganizer: async (req, res) => {
+    try {
+      const { id } = req.body;
+      const organizer = await Organizers.findById(id);
+      console.log(organizer);
+      if (organizer.status === 'false') {
+        organizer.status = 'true';
+        await organizer.save();
+        res.json({ status: true });
+      } else if (organizer.status === 'true') {
+        organizer.status = 'false';
+        await organizer.save();
+        res.json({ statuses: true });
+      }
+    } catch (error) {
+      res.json({ message: error });
+    }
+  },
+  
 
   
 

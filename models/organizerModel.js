@@ -48,9 +48,9 @@ const organizerSchema = new mongoose.Schema({
     capacity:{
         type:Number
     },
-    is_Approved:{
-        type:Number,
-        default:false
+    status:{
+        type:String,
+        default:'pending'
     }
 
 

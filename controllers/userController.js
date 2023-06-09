@@ -4,29 +4,30 @@ const jwt = require("jsonwebtoken");
 
 module.exports = {
   userAuth: async (req, res) => {
-    console.log('userAuth1');
-    try {
-      let userData = await User.findById(req.userId);
-      if (userData) {
-        const userdetails = {
-          email: userData.email,
-        };
+    const userId = req.decoded.id;
 
-        res.json({
+    const exp = req.decoded.exp * 1000;
+    const date = Date.now();
+    console.log(date);
+
+    try {
+      let userData = await User.findById(userId);
+      if (userData && exp > date) {
+        console.log("yes");
+        res.status(200).json({
           auth: true,
-          result: userdetails,
-          status: "success",
-          message: "Signin success",
+          userData,
+          status: true,
         });
       } else {
-        res.json({ auth: false, message: "user not found", status: "error" });
+        res.status(401).json({ auth: false, message: "session expired", status:false });
+        console.log("expired");
       }
     } catch (error) {
       res.json({ auth: false, message: error.message, status: "error" });
     }
   },
   postSignup: async (req, res) => {
-    
     console.log("etghi");
     console.log(req.body.exp);
 
@@ -62,7 +63,7 @@ module.exports = {
         // userSignup.Status = true,
         let userData = User.findOne({ email: req.body.email });
         let token = jwt.sign({ id: userData._id }, process.env.JWT_SECRET_KEY, {
-          expiresIn: "5d",
+          expiresIn: "1d",
         });
         res.status(200).json({ status: true, token });
       });
@@ -87,7 +88,7 @@ module.exports = {
           let token = jwt.sign(
             { id: userData._id },
             process.env.JWT_SECRET_KEY,
-            { expiresIn: "5d" }
+            { expiresIn: "30s" }
           );
           res.json({
             message: "Login Successful",

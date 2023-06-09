@@ -37,6 +37,7 @@ module.exports = {
           password: password1,
           mobile: mobile,
           event: event,
+          status:'false'
         }).then((data) => {
           res.status(200).json({ status: true });
         });
@@ -109,9 +110,10 @@ module.exports = {
     try {
       console.log(req.body);
       const organizer_Id =req.organizer_Id
-      const { organizerName, email, mobile, venue, budget, capacity, district, state, description,services,imageUrl } = req.body;
+      const { organizerName, email, mobile, venue, budget, capacity, district, state, description,services,imageUrl,logoUrl } = req.body;
       let profileData = await Organizer.findById(organizer_Id);
      let newImages = profileData.images.concat(imageUrl)
+    //  let newServices = profileData.service.push(services)
       if (profileData) {
         await Organizer.findByIdAndUpdate(organizer_Id, {
           organizerName,
@@ -124,7 +126,9 @@ module.exports = {
           state,
           description,
           service:services,
-          images:newImages
+          images:newImages,
+          logo:logoUrl
+          
         });
   
         res.json({ status: true, message: "Profile updated successfully!",service:profileData.service });
@@ -137,7 +141,7 @@ module.exports = {
   },
   loadOrganizers:async(req,res)=>{
     try {
-      const organizers = await Organizer.find({})
+      const organizers = await Organizer.find({status:true})
       res.json({organizers})
     } catch (error) {
       res.json({message:error})
