@@ -98,7 +98,7 @@ module.exports = {
     try {
      console.log(req.organizer_Id,'a');
      const organizer_Id =req.organizer_Id
-      const profile  = await Organizer.findById(organizer_Id)
+      const profile  = await Organizer.findById(organizer_Id,{password:0,_id:0})
     
       console.log(profile);
       res.json({profile})
@@ -108,12 +108,13 @@ module.exports = {
   },
   updateProfile: async (req, res) => {
     try {
-      console.log(req.body);
+      console.log(req.body.services);
       const organizer_Id =req.organizer_Id
       const { organizerName, email, mobile, venue, budget, capacity, district, state, description,services,imageUrl,logoUrl } = req.body;
       let profileData = await Organizer.findById(organizer_Id);
      let newImages = profileData.images.concat(imageUrl)
-    //  let newServices = profileData.service.push(services)
+    //  let newServices = profileData.service.concat(services);
+
       if (profileData) {
         await Organizer.findByIdAndUpdate(organizer_Id, {
           organizerName,
@@ -141,8 +142,11 @@ module.exports = {
   },
   loadOrganizers:async(req,res)=>{
     try {
-      const organizers = await Organizer.find({status:true})
-      res.json({organizers})
+      const organizers = await Organizer.find({status:true},{
+        password
+        :0})
+        const events = await Events.find({})
+      res.json({organizers,events})
     } catch (error) {
       res.json({message:error})
     }

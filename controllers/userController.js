@@ -88,7 +88,7 @@ module.exports = {
           let token = jwt.sign(
             { id: userData._id },
             process.env.JWT_SECRET_KEY,
-            { expiresIn: "30s" }
+            { expiresIn: "1d" }
           );
           res.json({
             message: "Login Successful",
