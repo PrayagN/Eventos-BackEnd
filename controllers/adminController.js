@@ -10,7 +10,7 @@ module.exports = {
   postSignin: async (req, res) => {
     try {
       const { email, password } = req.body;
-      let adminData = await Admin.findOne({ email });
+      const adminData = await Admin.findOne({ email });
       if (adminData) {
         const passwordMatch = await bcrypt.compare(password, adminData.password);
         if (passwordMatch) {

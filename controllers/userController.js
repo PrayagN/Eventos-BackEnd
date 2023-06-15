@@ -11,7 +11,7 @@ module.exports = {
     console.log(date);
 
     try {
-      let userData = await User.findById(userId);
+      let userData = await User.findById(userId,{_id:0,password:0});
       if (userData && exp > date) {
         console.log("yes");
         res.status(200).json({
@@ -107,4 +107,35 @@ module.exports = {
       res.json({ message: "something gone wrong", status: false });
     }
   },
+  loadProfile:async(req,res)=>{
+    try {
+      
+      const user_id = req.decoded.id
+      const profile = await User.findById(user_id,{_id:0,password:0})
+      res.status(200).json({profile})
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  updateProfile:async(req,res)=>{
+    try {
+      const user_id = req.decoded.id
+      const {username,mobile,district,state,imageUrl} = req.body
+      console.log(username);
+      const userData = await User.findById(user_id,{password:0,_id:0})
+      if (userData) {
+        await User.findByIdAndUpdate(user_id, {
+          username,
+          mobile,
+          state,
+          district,
+          image:imageUrl
+                
+        });
+      }
+      res.status(200).json({status:true,message:'successfully updated'})
+    } catch (error) {
+      res.json(error)
+    }
+  }
 };
