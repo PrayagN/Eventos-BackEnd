@@ -8,7 +8,7 @@ module.exports = {
 
     const exp = req.decoded.exp * 1000;
     const date = Date.now();
-    console.log(date);
+  
 
     try {
       let userData = await User.findById(userId,{_id:0,password:0});
@@ -28,19 +28,14 @@ module.exports = {
     }
   },
   postSignup: async (req, res) => {
-    console.log("etghi");
-    console.log(req.body.exp);
-
-    // let { username, email, password, mobile } = req.body;
-
-    console.log(req.body.password);
+  
     let user = await User.findOne({ email: req.body.email });
 
     if (user) {
       res.json({ status: false, message: "email already exists" });
     } else if (req.body.otp) {
       const password1 = await bcrypt.hash(req.body.password, 10);
-      console.log("created");
+     
       User.create({
         username: req.body.username,
         email: req.body.email,
@@ -51,9 +46,9 @@ module.exports = {
         res.status(200).json({ status: true });
       });
     } else if (req.body.exp) {
-      console.log("gggp");
+     
       const password1 = await bcrypt.hash(req.body.password, 10);
-      console.log("created");
+   
       User.create({
         username: req.body.username,
         email: req.body.email,
@@ -77,13 +72,13 @@ module.exports = {
       let userData = await User.findOne({ email: req.body.email });
 
       if (userData) {
-        console.log("sdf");
+        
         const passwordMatch = await bcrypt.compare(
           req.body.password,
           userData.password
         );
         if (passwordMatch) {
-          console.log("h");
+          
           const username = userData.username;
           let token = jwt.sign(
             { id: userData._id },
@@ -121,7 +116,7 @@ module.exports = {
     try {
       const user_id = req.decoded.id
       const {username,mobile,district,state,imageUrl} = req.body
-      console.log(username);
+     
       const userData = await User.findById(user_id,{password:0,_id:0})
       if (userData) {
         await User.findByIdAndUpdate(user_id, {
@@ -138,4 +133,6 @@ module.exports = {
       res.json(error)
     }
   }
+
+
 };

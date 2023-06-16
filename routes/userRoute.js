@@ -11,4 +11,5 @@ userRoute.get("/listEvent",adminController.loadEvents);
 userRoute.get("/listOrganizers", organizerController.loadOrganizers);
 userRoute.get('/profile',userProtect,userController.loadProfile)
 userRoute.put('/updateProfile',userProtect,userController.updateProfile)
+userRoute.post('/viewOrganizer',adminController.viewOrganizer)
 module.exports = userRoute;
