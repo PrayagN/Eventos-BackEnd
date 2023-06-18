@@ -19,7 +19,7 @@ dbConnect()
 app.use(cookieParser());
 app.use(
     CORS({
-        origin: 'http://localhost:5173',
+        origin: process.env.CLIENT_URL,
         credentials: true,
         methods: ["GET", "POST",'PUT'],
         allowedHeaders: ["Content-Type,Authorization"],

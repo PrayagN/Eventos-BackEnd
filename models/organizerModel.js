@@ -45,8 +45,8 @@ const organizerSchema = new mongoose.Schema({
     budget:{
         type:Number
     },
-    capacity:{
-        type:Number
+    bookedEvents:{
+        type:Array
     },
     status:{
         type:String,
