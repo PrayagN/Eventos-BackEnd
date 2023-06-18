@@ -26,6 +26,18 @@ const BookedEventsSchema = new  mongoose.Schema({
     bookedDate:{
         type:Date,
         required:true
+    },
+    guests:{
+        type:Number,
+        required:true
+    },
+    status: {
+        type: Boolean,
+        default: false,
+    },
+    payment:{
+        type:String,
+        required:true
     }
 
 },{timestamps:true})

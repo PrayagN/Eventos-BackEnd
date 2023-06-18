@@ -51,6 +51,11 @@ const organizerSchema = new mongoose.Schema({
     status:{
         type:String,
         default:'pending'
+    },
+    upcomingEvents:{
+        type:[mongoose.Schema.Types.ObjectId],
+        ref:'BookedEvents',
+        
     }
 
 

@@ -19,5 +19,6 @@ userRoute.put('/updateProfile',userProtect,userController.updateProfile)
 
 
 userRoute.post('/create-checkout-session',userProtect,paymentController.checkoutPayment)
-// userRoute.get('/verifyPayment/:order_id',paymentController.verifyPayment)
+userRoute.get('/verifyPayment/:order_id/:organizer_id',paymentController.verifyPayment)
+userRoute.get('/cancelPayment/:order_id',paymentController.cancelPayment)
 module.exports = userRoute;
