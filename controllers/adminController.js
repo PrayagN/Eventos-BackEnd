@@ -141,8 +141,10 @@ module.exports = {
     try {
     
       const {id} = req.body
+      const event = await Event.findById(id)
+      const eventPhoto = event?.image 
     await  Organizers.find({ eventId:id}).then((response)=>{
-      return res.status(200).json({organizers:response})
+      return res.status(200).json({organizers:response,eventPhoto})
 
       }).catch((error)=>{
         return res.status(500).json({message:'something went wrong while fetching data'})
