@@ -10,9 +10,13 @@ module.exports = {
     try {
       const user_id = req.decoded.id;
       const { guests, selectedDate, organizer_id } = req.body;
+      let date = new Date(selectedDate);
+      date.setDate(date.getDate() + 1); // Add one day to the selected date
+
+      console.log(date,'selectedDate');
       const organizer = await Organizer.findById(organizer_id);
       const total = guests * organizer.budget;
-      const advance = total * 0.1;
+      const advance = total * organizer.advance/100;
       if (organizer) {
         const newOrder = new Orders({
           totalAmount: total,
@@ -20,10 +24,11 @@ module.exports = {
           organizer: organizer_id,
           client: user_id,
           guests:guests,
-          eventScheduled: selectedDate,
+          eventScheduled:date,
           bookedDate: new Date(),
           payment:'Advance Only'
         });
+        console.log(date);
         newOrder.save().then(async (order) => {
           const session = await stripe.checkout.sessions.create({
           line_items: [
@@ -58,7 +63,7 @@ module.exports = {
         const order_id =req.params.order_id
         const organizer_id = req.params.organizer_id
         const order = await Orders.findById(order_id)
-       await Organizer.findByIdAndUpdate(organizer_id,{$push:{upcomingEvents:order_id}})
+     
         if(order){
           Orders.findByIdAndUpdate(order_id,{$set:{status:true}}).then((response)=>{
             res.redirect(`${process.env.CLIENT_URL}/paymentSuccess`)

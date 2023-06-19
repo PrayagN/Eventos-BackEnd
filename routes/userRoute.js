@@ -10,6 +10,7 @@ userRoute.post("/signup", userController.postSignup);
 userRoute.post("/signin", userController.postSignin);
 
 userRoute.get("/listEvent",adminController.loadEvents);
+userRoute.post('/eventOrganizers',adminController.eventOrganizers)
 
 userRoute.get("/listOrganizers", organizerController.loadOrganizers);
 userRoute.post('/viewOrganizer',adminController.viewOrganizer)

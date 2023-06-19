@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose')
 const organizerSchema = new mongoose.Schema({
     organizerName:{
@@ -22,15 +23,17 @@ const organizerSchema = new mongoose.Schema({
     district:{
         type:String
     },
-    state:{
-        type:String
-    },
     service:{
         type:Array
     },
     event:{
         type:String,
         default:true
+    },
+    eventId:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Events',
+        required:true
     },
     venue:{
         type:String,
@@ -55,12 +58,18 @@ const organizerSchema = new mongoose.Schema({
     upcomingEvents:{
         type:[mongoose.Schema.Types.ObjectId],
         ref:'BookedEvents',
-        
+    },
+    paymentStatus:{
+        type:String,
+        default:'Advance Only'
+    },
+    advance:{
+        type:Number,
+        required:true,
+        min:0,
+        max:100
     }
-
-
     
-
 }, { timestamps: true },);
 
 module.exports = mongoose.model('Organizer',organizerSchema)

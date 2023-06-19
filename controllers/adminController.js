@@ -1,10 +1,10 @@
-const Admin = require('../models/adminModel');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const Event = require('../models/eventModel')
-const Organizers =require('../models/organizerModel')
-const User = require('../models/userModel');
-
+const Admin = require("../models/adminModel");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const Event = require("../models/eventModel");
+const Organizers = require("../models/organizerModel");
+const User = require("../models/userModel");
+const BookedEvents = require("../models/bookedEventsModel");
 
 module.exports = {
   postSignin: async (req, res) => {
@@ -12,21 +12,30 @@ module.exports = {
       const { email, password } = req.body;
       const adminData = await Admin.findOne({ email });
       if (adminData) {
-        const passwordMatch = await bcrypt.compare(password, adminData.password);
+        const passwordMatch = await bcrypt.compare(
+          password,
+          adminData.password
+        );
         if (passwordMatch) {
-          let token = jwt.sign({ id: adminData._id }, process.env.JWT_SECRET_KEY, { expiresIn: '5d' });
-          res.status(200).json({ message: 'Login Successful', status: true, token });
+          let token = jwt.sign(
+            { id: adminData._id },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "5d" }
+          );
+          res
+            .status(200)
+            .json({ message: "Login Successful", status: true, token });
         } else {
-          res.json({ message: 'Password is incorrect', status: false });
+          res.json({ message: "Password is incorrect", status: false });
         }
       } else {
-        res.json({ message: 'Email does not exist', status: false });
+        res.json({ message: "Email does not exist", status: false });
       }
     } catch (error) {
-      res.status(500).json({ message: 'Something went wrong', status: false });
+      res.status(500).json({ message: "Something went wrong", status: false });
     }
   },
-  
+
   adminAuth: async (req, res) => {
     try {
       let adminData = await Admin.findById(req.adminId);
@@ -34,85 +43,93 @@ module.exports = {
         const admindetails = {
           email: adminData.email,
         };
-        
-        res.json({ auth: true, result: admindetails, status: 'success', message: 'Signin success' });
-  
+
+        res.json({
+          auth: true,
+          result: admindetails,
+          status: "success",
+          message: "Signin success",
+        });
       } else {
-        res.json({ auth: false, message: 'Admin not found', status: 'error' });
+        res.json({ auth: false, message: "Admin not found", status: "error" });
       }
     } catch (error) {
-      res.json({ auth: false, message: error.message, status: 'error' });
+      res.json({ auth: false, message: error.message, status: "error" });
     }
   },
-  addEvents:async(req,res)=>{
+  addEvents: async (req, res) => {
     try {
-    
-      if(req.file && req.file.path){
+      if (req.file && req.file.path) {
         Event.create({
-          title:req.body.title,
-          image:req.file.filename,
-          
-        }).then((data)=>{
-          res.json({status:true,message:'Event added successfully'})
-        })
-      }else{
-        res.json({status:false,message:'invalid image type'})
+          title: req.body.title,
+          image: req.file.filename,
+        }).then((data) => {
+          res.json({ status: true, message: "Event added successfully" });
+        });
+      } else {
+        res.json({ status: false, message: "invalid image type" });
       }
     } catch (error) {
-      res.json({message:error})
+      res.json({ message: error });
     }
   },
-  loadEvents:async(req,res)=>{
+  loadEvents: async (req, res) => {
     try {
-        const events = await Event.find({})
-        
-        res.json({events})
+      const events = await Event.find({});
+
+      res.json({ events });
     } catch (error) {
-      res.json({message:error})
+      res.json({ message: error });
     }
   },
-  listOrganizers:async(req,res)=>{
+  listOrganizers: async (req, res) => {
     try {
-      const organizers = await Organizers.find({})
-      res.json({organizers})
+      const organizers = await Organizers.find({});
+      res.json({ organizers });
     } catch (error) {
-      res.json({message:error})
+      res.json({ message: error });
     }
   },
-  listCustomers:async(req,res)=>{
+  listCustomers: async (req, res) => {
     try {
-      const customers = await User.find({})
-      res.json({customers})
+      const customers = await User.find({});
+      res.json({ customers });
     } catch (error) {
-      res.json({message:error})
+      res.json({ message: error });
     }
   },
-  viewOrganizer:async(req,res)=>{
+  viewOrganizer: async (req, res) => {
     try {
-      console.log(req.body);
-      const {id} = req.body
-      const organizer = await Organizers.findById(id)  
-      console.log(organizer);
-      if(organizer){
-        res.status(200).json({status:true,organizer})
-      }else{
-        res.status(401).json({status:false,message:'something went wrong'})
+      const { id } = req.body;
+
+      const eve = await BookedEvents.find({ organizer: id });
+      const bookedDates = eve.map((event) => event.eventScheduled);
+
+      const organizer = await Organizers.findById(id);
+
+      if (organizer) {
+        res.status(200).json({ status: true, organizer, bookedDates });
+      } else {
+        res
+          .status(401)
+          .json({ status: false, message: "Something went wrong" });
       }
     } catch (error) {
-      res.json({message:error})
+      res.json({ message: error });
     }
   },
+
   acceptOrganizer: async (req, res) => {
     try {
       const { id } = req.body;
       const organizer = await Organizers.findById(id);
       console.log(organizer);
-      if (organizer.status === 'false') {
-        organizer.status = 'true';
+      if (organizer.status === "false") {
+        organizer.status = "true";
         await organizer.save();
         res.json({ status: true });
-      } else if (organizer.status === 'true') {
-        organizer.status = 'false';
+      } else if (organizer.status === "true") {
+        organizer.status = "false";
         await organizer.save();
         res.json({ statuses: true });
       }
@@ -120,8 +137,19 @@ module.exports = {
       res.json({ message: error });
     }
   },
-  
+  eventOrganizers: async(req,res,next)=>{
+    try {
+    
+      const {id} = req.body
+    await  Organizers.find({ eventId:id}).then((response)=>{
+      return res.status(200).json({organizers:response})
 
-  
-
+      }).catch((error)=>{
+        return res.status(500).json({message:'something went wrong while fetching data'})
+      })
+      
+    } catch (error) {
+      next(error)
+    }
+  }
 };

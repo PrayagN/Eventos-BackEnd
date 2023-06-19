@@ -3,28 +3,37 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Events = require("../models/eventModel");
 
-
 module.exports = {
   organizerAuth: async (req, res) => {
     try {
       let organizerData = await Organizer.findById(req.organizer_Id);
-    
+
       if (organizerData) {
         const organizerdetails = {
           email: organizerData.email,
         };
-        res.json({ auth: true, result: organizerdetails, status: 'success', message: 'Signin success' });
+        res.json({
+          auth: true,
+          result: organizerdetails,
+          status: "success",
+          message: "Signin success",
+        });
       } else {
-        res.json({ auth: false, message: 'Organizer not found', status: 'error' });
+        res.json({
+          auth: false,
+          message: "Organizer not found",
+          status: "error",
+        });
       }
     } catch (error) {
-      res.json({ auth: false, message: error.message, status: 'error' });
+      res.json({ auth: false, message: error.message, status: "error" });
     }
   },
   postSignup: async (req, res) => {
     try {
       let { organizerName, email, password, mobile, event } = req.body;
       console.log(req.body);
+      const eventId = await Events.find({ title: event }, { _id: 1 });
       let organizer = await Organizer.findOne({ email: email });
       if (organizer) {
         res.json({ status: false, message: "email already exists" });
@@ -37,7 +46,8 @@ module.exports = {
           password: password1,
           mobile: mobile,
           event: event,
-          status:'false'
+          eventId: eventId,
+          status: "false",
         }).then((data) => {
           res.status(200).json({ status: true });
         });
@@ -61,9 +71,13 @@ module.exports = {
         if (passwordMatch) {
           console.log("h");
           const organizerName = organizerData.organizerName;
-          let token = jwt.sign({ id: organizerData._id }, process.env.JWT_SECRET_KEY, {
-            expiresIn: "30d",
-          });
+          let token = jwt.sign(
+            { id: organizerData._id },
+            process.env.JWT_SECRET_KEY,
+            {
+              expiresIn: "30d",
+            }
+          );
           res.json({
             message: "Login Successful",
             status: true,
@@ -82,7 +96,6 @@ module.exports = {
   },
   viewEvents: async (req, res) => {
     try {
-        
       const events = await Events.find({});
       console.log(events);
       if (events) {
@@ -94,26 +107,39 @@ module.exports = {
       res.json({ status: false, message: error });
     }
   },
-  profile : async(req,res)=>{
+  profile: async (req, res) => {
     try {
-     console.log(req.organizer_Id,'a');
-     const organizer_Id =req.organizer_Id
-      const profile  = await Organizer.findById(organizer_Id,{password:0,_id:0})
-    
-      console.log(profile);
-      res.json({profile})
+      const organizer_Id = req.organizer_Id;
+      const profile = await Organizer.findById(organizer_Id, {
+        password: 0,
+        _id: 0,
+      });
+
+      res.json({ profile });
     } catch (error) {
-      res.json({message:error})
+      res.json({ message: error });
     }
   },
   updateProfile: async (req, res) => {
     try {
-      console.log(req.body.services);
-      const organizer_Id =req.organizer_Id
-      const { organizerName, email, mobile, venue, budget, capacity, district, state, description,services,imageUrl,logoUrl } = req.body;
+      const organizer_Id = req.organizer_Id;
+      const {
+        organizerName,
+        email,
+        mobile,
+        venue,
+        budget,
+        district,
+        advance,
+        description,
+        services,
+        imageUrl,
+        logoUrl,
+      } = req.body;
       let profileData = await Organizer.findById(organizer_Id);
-     let newImages = profileData.images.concat(imageUrl)
-    //  let newServices = profileData.service.concat(services);
+    
+      let newImages = profileData.images.concat(imageUrl);
+     
 
       if (profileData) {
         await Organizer.findByIdAndUpdate(organizer_Id, {
@@ -122,17 +148,19 @@ module.exports = {
           mobile,
           venue,
           budget,
-          capacity,
+          advance,
           district,
-          state,
           description,
-          service:services,
-          images:newImages,
-          logo:logoUrl
-          
+          service: services,
+          images: newImages,
+          logo: logoUrl
         });
-  
-        res.json({ status: true, message: "Profile updated successfully!",service:profileData.service });
+        
+        res.json({
+          status: true,
+          message: "Profile updated successfully!",
+          service: profileData.service,
+        });
       } else {
         res.json({ status: false, message: "Profile not found" });
       }
@@ -140,17 +168,18 @@ module.exports = {
       res.json({ status: false, message: error.message });
     }
   },
-  loadOrganizers:async(req,res)=>{
+  loadOrganizers: async (req, res) => {
     try {
-      const organizers = await Organizer.find({status:true},{
-        password
-        :0})
-        const events = await Events.find({})
-      res.json({organizers,events})
+      const organizers = await Organizer.find(
+        { status: true },
+        {
+          password: 0,
+        }
+      );
+      const events = await Events.find({});
+      res.json({ organizers, events });
     } catch (error) {
-      res.json({message:error})
+      res.json({ message: error });
     }
   },
-  
-  
 };
