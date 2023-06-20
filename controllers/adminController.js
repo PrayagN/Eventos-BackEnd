@@ -57,6 +57,21 @@ module.exports = {
       res.json({ auth: false, message: error.message, status: "error" });
     }
   },
+
+  loadDashboard : async(req,res,next)=>{
+    try {
+      const bookedEvents  = await BookedEvents.find()
+      const organizers = await Organizers.find({},{organizerName:1,logo:1,_id:1})
+      
+      const organizerCount = organizers.length
+      const necessaryData ={
+        bookedEvents,organizers,organizerCount,
+      }
+      res.status(200).json({necessaryData})
+    } catch (error) {
+      next(error)
+    }
+  },
   addEvents: async (req, res) => {
     try {
       if (req.file && req.file.path) {
@@ -102,13 +117,14 @@ module.exports = {
     try {
       const { id } = req.body;
 
-      const eve = await BookedEvents.find({ organizer: id });
-      const bookedDates = eve.map((event) => event.eventScheduled);
+      const booked = await BookedEvents.find({ organizer: id });
+      const bookedDates = booked.map((event) => event.eventScheduled);
+      const count = booked.length;
 
       const organizer = await Organizers.findById(id);
 
       if (organizer) {
-        res.status(200).json({ status: true, organizer, bookedDates });
+        res.status(200).json({ status: true, organizer, bookedDates, count });
       } else {
         res
           .status(401)
@@ -137,21 +153,52 @@ module.exports = {
       res.json({ message: error });
     }
   },
-  eventOrganizers: async(req,res,next)=>{
+  eventOrganizers: async (req, res, next) => {
     try {
-    
-      const {id} = req.body
-      const event = await Event.findById(id)
-      const eventPhoto = event?.image 
-    await  Organizers.find({ eventId:id}).then((response)=>{
-      return res.status(200).json({organizers:response,eventPhoto})
-
-      }).catch((error)=>{
-        return res.status(500).json({message:'something went wrong while fetching data'})
-      })
-      
+      const { id } = req.body;
+      const event = await Event.findById(id);
+      const eventPhoto = event?.image;
+      await Organizers.find({ eventId: id })
+        .then((response) => {
+          return res.status(200).json({ organizers: response, eventPhoto });
+        })
+        .catch((error) => {
+          return res
+            .status(500)
+            .json({ message: "something went wrong while fetching data" });
+        });
     } catch (error) {
-      next(error)
+      next(error);
     }
-  }
+  },
+  bookedEventsData: async (req, res, next) => {
+    try {
+      const bookedEvents = await BookedEvents.find({})
+        .populate("organizer")
+        .populate("client");
+
+      const necessaryData = bookedEvents.map((event) => ({
+        _id: event._id,
+        totalAmount: event.totalAmount,
+        advanceAmount: event.advanceAmount,
+        organizerName: event.organizer.organizerName,
+        clientName: event.client.username,
+        clientEmail: event.client.email,
+        event: event.organizer.event,
+        eventScheduled: event.eventScheduled,
+        bookedDate: event.bookedDate,
+        paymentStatus: event.payment,
+      }));
+
+      if (necessaryData) {
+        res.status(200).json({ necessaryData });
+      } else {
+        return res
+          .status(500)
+          .json({ message: "something went wrong while fetching data" });
+      }
+    } catch (error) {
+      next(error);
+    }
+  },
 };

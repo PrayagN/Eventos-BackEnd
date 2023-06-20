@@ -17,6 +17,7 @@ userRoute.post('/viewOrganizer',adminController.viewOrganizer)
 
 userRoute.get('/profile',userProtect,userController.loadProfile)
 userRoute.put('/updateProfile',userProtect,userController.updateProfile)
+userRoute.get('/booked-events',userProtect,userController.bookedEvents)
 
 
 userRoute.post('/create-checkout-session',userProtect,paymentController.checkoutPayment)

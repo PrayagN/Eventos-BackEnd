@@ -20,11 +20,15 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 adminRoute.get('/isAdminAuth',adminProtect, adminController.adminAuth);
 adminRoute.post('/signin', adminController.postSignin);
+
+adminRoute.get('/loadDashboard',adminProtect,adminController.loadDashboard)
 adminRoute.post('/addEvents', adminProtect, upload.single('image'), adminController.addEvents);
 adminRoute.get('/events',adminProtect,adminController.loadEvents)
+
 adminRoute.get('/listOrganizers',adminProtect,adminController.listOrganizers)
 adminRoute.post('/viewOrganizer/',adminProtect,adminController.viewOrganizer)
-adminRoute.get('/listCustomers',adminProtect,adminController.listCustomers)
 adminRoute.post('/acceptOrganizer',adminProtect,adminController.acceptOrganizer)
 
+adminRoute.get('/listCustomers',adminProtect,adminController.listCustomers)
+adminRoute.get('/bookedEventsData',adminProtect,adminController.bookedEventsData)
 module.exports = adminRoute;
