@@ -2,6 +2,7 @@ const Organizer = require("../models/organizerModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Events = require("../models/eventModel");
+const { response } = require("../routes/userRoute");
 
 module.exports = {
   organizerAuth: async (req, res) => {
@@ -137,9 +138,8 @@ module.exports = {
         logoUrl,
       } = req.body;
       let profileData = await Organizer.findById(organizer_Id);
-    
+
       let newImages = profileData.images.concat(imageUrl);
-     
 
       if (profileData) {
         await Organizer.findByIdAndUpdate(organizer_Id, {
@@ -153,9 +153,9 @@ module.exports = {
           description,
           service: services,
           images: newImages,
-          logo: logoUrl
+          logo: logoUrl,
         });
-        
+
         res.json({
           status: true,
           message: "Profile updated successfully!",
@@ -168,18 +168,38 @@ module.exports = {
       res.json({ status: false, message: error.message });
     }
   },
-  loadOrganizers: async (req, res) => {
+  loadOrganizers: async (req, res,next) => {
     try {
-      const organizers = await Organizer.find(
-        { status: true },
-        {
-          password: 0,
-        }
-      );
+      const page = parseInt(req.query.activePage) || 1;
+      const size = parseInt(req.params.size) || 2;
+      const skip = (page - 1) * size;
+      const searchQuery = req.query.searchQuery;
+      const selectedEvent = req.query.selectedEvent;
+    
+      const query = {
+        status: true,
+      };
+      if (searchQuery) {
+        query.$or = [
+          { organizerName: { $regex: searchQuery, $options: "i" } },
+          { venue: { $regex: searchQuery, $options: "i" } },
+          { event: { $regex: searchQuery, $options: "i" } },
+          { district: { $regex: searchQuery, $options: "i" } },
+        ];
+      }
+      if(selectedEvent !=='All'){
+        query.event = selectedEvent 
+      }
+      const total = await Organizer.countDocuments(query)
       const events = await Events.find({});
-      res.json({ organizers, events });
+       await Organizer.find({...query,status:true} ,{password: 0,status:0 } ).lean().sort({ createdAt: -1 }).skip(skip).limit(size).then((response)=>{
+       
+        res.status(200).json({organizers:response, total,page,size,events})
+       }).catch((error)=>{
+        res.status(500).json({message:'something went wrong'})
+       })
     } catch (error) {
-      res.json({ message: error });
+      next(error)
     }
   },
 };
