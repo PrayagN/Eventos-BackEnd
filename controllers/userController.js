@@ -3,15 +3,16 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const BookedEvents = require("../models/bookedEventsModel");
 const Review = require('../models/reviewModal')
+const Organizer = require('../models/organizerModel')
 module.exports = {
-  userAuth: async (req, res) => {
+  userAuth: async (req, res,next) => {
     const userId = req.decoded.id;
 
     const exp = req.decoded.exp * 1000;
     const date = Date.now();
 
     try {
-      let userData = await User.findById(userId, { _id: 0, password: 0 });
+      const userData = await User.findById(userId, { _id: 0, password: 0 });
       if (userData && exp > date) {
         res.status(200).json({
           auth: true,
@@ -25,48 +26,53 @@ module.exports = {
         console.log("expired");
       }
     } catch (error) {
-      res.json({ auth: false, message: error.message, status: "error" });
+      next(error)
     }
   },
-  postSignup: async (req, res) => {
-    let user = await User.findOne({ email: req.body.email });
-
-    if (user) {
-      res.json({ status: false, message: "email already exists" });
-    } else if (req.body.otp) {
-      const password1 = await bcrypt.hash(req.body.password, 10);
-
-      User.create({
-        username: req.body.username,
-        email: req.body.email,
-        password: password1,
-        mobile: req.body.mobile,
-      }).then((data) => {
-        // userSignup.Status = true,
-        res.status(200).json({ status: true });
-      });
-    } else if (req.body.exp) {
-      const password1 = await bcrypt.hash(req.body.password, 10);
-
-      User.create({
-        username: req.body.username,
-        email: req.body.email,
-        password: password1,
-        // mobile:mobile
-      }).then((data) => {
-        // userSignup.Status = true,
-        let userData = User.findOne({ email: req.body.email });
-        let token = jwt.sign({ id: userData._id }, process.env.JWT_SECRET_KEY, {
-          expiresIn: "1d",
+  postSignup: async (req, res,next) => {
+    try {
+      
+      const user = await User.findOne({ email: req.body.email });
+      
+      if (user) {
+        res.json({ status: false, message: "email already exists" });
+      } else if (req.body.otp) {
+        const password1 = await bcrypt.hash(req.body.password, 10);
+        
+        User.create({
+          username: req.body.username,
+          email: req.body.email,
+          password: password1,
+          mobile: req.body.mobile,
+        }).then((data) => {
+          // userSignup.Status = true,
+          res.status(200).json({ status: true });
         });
-        res.status(200).json({ status: true, token });
-      });
-    } else {
-      res.status(200).json({ status: true });
+      } else if (req.body.exp) {
+        const password1 = await bcrypt.hash(req.body.password, 10);
+        
+        User.create({
+          username: req.body.username,
+          email: req.body.email,
+          password: password1,
+          // mobile:mobile
+        }).then((data) => {
+          // userSignup.Status = true,
+          let userData = User.findOne({ email: req.body.email });
+          let token = jwt.sign({ id: userData._id }, process.env.JWT_SECRET_KEY, {
+            expiresIn: "1d",
+          });
+          res.status(200).json({ status: true, token });
+        });
+      } else {
+        res.status(200).json({ status: true });
+      }
+    } catch (error) {
+      next(error)
     }
-  },
-
-  postSignin: async (req, res) => {
+    },
+    
+    postSignin: async (req, res,next) => {
     try {
       let userData = await User.findOne({ email: req.body.email });
 
@@ -95,20 +101,19 @@ module.exports = {
         res.json({ message: "email does not exist", status: false });
       }
     } catch (error) {
-      console.log(error);
-      res.json({ message: "something gone wrong", status: false });
+      next(error)
     }
   },
-  loadProfile: async (req, res) => {
+  loadProfile: async (req, res,next) => {
     try {
       const user_id = req.decoded.id;
       const profile = await User.findById(user_id, { _id: 0, password: 0 });
       res.status(200).json({ profile });
     } catch (error) {
-      console.log(error);
+      next(error)
     }
   },
-  updateProfile: async (req, res) => {
+  updateProfile: async (req, res,next) => {
     try {
       const user_id = req.decoded.id;
       const { username, mobile, district, state, imageUrl } = req.body;
@@ -125,7 +130,7 @@ module.exports = {
       }
       res.status(200).json({ status: true, message: "successfully updated" });
     } catch (error) {
-      res.json(error);
+      next(error)
     }
   },
   bookedEvents: (req, res, next) => {
@@ -141,40 +146,51 @@ module.exports = {
       next(error);
     }
   },
-  reviewOrganizer: async (req, res) => {
+  reviewOrganizer: async (req, res, next) => {
     try {
       const { id } = req.body;
       const organizer_Id = id;
       const user_id = req.decoded.id;
-      
-
-        await BookedEvents.findOne({ $and: [{ client: user_id }, { organizer: organizer_Id }] })
-       .then((response)=>{
-         if (response) {
-          if(!req.body.review){
-           res.status(200).json({ status: true });
-          }else{
-            Review.create({
-              reviewedBy:user_id,
-              organizer :organizer_Id,
-              rating:req.body.rating,
-              review:req.body.review
-            }).then((response)=>{
-              res.status(200).json({message:'review posted'})
-            })
+  
+      const bookedEvent = await BookedEvents.findOne({
+        $and: [{ client: user_id }, { organizer: organizer_Id }],
+      });
+  
+      if (bookedEvent) {
+        const existingReview = await Review.findOne({
+          reviewedBy: user_id,
+          organizer: organizer_Id,
+        }).populate("reviewedBy");
+  
+        if (existingReview) {
+          res.status(200).json({ message: "You already reviewed this organizer!" });
+        } else {
+          if (!req.body.review) {
+            res.status(200).json({ status: true });
+          } else {
+            const review = await Review.create({
+              reviewedBy: user_id,
+              organizer: organizer_Id,
+              rating: req.body.rating,
+              review: req.body.review,
+            });
+  
+            await Organizer.findByIdAndUpdate(
+              { _id: organizer_Id },
+              { $set: { review: review._id } }
+            );
+  
+            res.status(200).json({ message1: "Review posted successfully!" });
           }
-         } else {
-           throw new Error("You should want to book this organizer for rating");
-         }
-         
-       }).catch((error)=>{       
-           res.status(404).json({ message: "You should want to book this organizer for rating" });      })
-      
-     
-
-      
+        }
+      } else {
+        throw new Error("You should book this organizer to submit a review.");
+      }
     } catch (error) {
+      res.status(404).json({ message: "You should want to book this organizer for rating" });      
       next(error);
     }
   },
+  
+  
 };

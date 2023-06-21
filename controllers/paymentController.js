@@ -6,7 +6,7 @@ const Organizer = require("../models/organizerModel");
 const Orders = require("../models/bookedEventsModel");
 
 module.exports = {
-  checkoutPayment: async (req, res) => {
+  checkoutPayment: async (req, res,next) => {
     try {
       const user_id = req.decoded.id;
       const { guests, selectedDate, organizer_id } = req.body;
@@ -55,10 +55,10 @@ module.exports = {
         res.redirect(`${process.env.CLIENT_URL}/organizers/view/${organizer_id}`);
       }
     } catch (error) {
-      console.log(error);
+      next(error)
     }
   },
-   verifyPayment :async(req,res)=>{
+   verifyPayment :async(req,res,next)=>{
       try {
         const order_id =req.params.order_id
         const organizer_id = req.params.organizer_id
@@ -73,10 +73,10 @@ module.exports = {
           res.redirect(`${process.env.CLIENT_URL}/cancelPayment/${order.organizer_id}`)
         }
       } catch (error) {
-        console.log(error);
+        next(error)
       }
    },
-  cancelPayment:async(req,res)=>{
+  cancelPayment:async(req,res,next)=>{
     try {
       const order_id = req.params.order_id
       const order = await Orders.findById(order_id)
@@ -85,7 +85,7 @@ module.exports = {
       })
       
     } catch (error) {
-      console.log(error);
+      next(error)
     }
   }
 };

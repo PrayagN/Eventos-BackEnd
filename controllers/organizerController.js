@@ -2,10 +2,10 @@ const Organizer = require("../models/organizerModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Events = require("../models/eventModel");
-const { response } = require("../routes/userRoute");
+const Review = require('../models/reviewModal')
 
 module.exports = {
-  organizerAuth: async (req, res) => {
+  organizerAuth: async (req, res,next) => {
     try {
       let organizerData = await Organizer.findById(req.organizer_Id);
 
@@ -27,10 +27,10 @@ module.exports = {
         });
       }
     } catch (error) {
-      res.json({ auth: false, message: error.message, status: "error" });
+      next(error)
     }
   },
-  postSignup: async (req, res) => {
+  postSignup: async (req, res,next) => {
     try {
       let { organizerName, email, password, mobile, event } = req.body;
       console.log(req.body);
@@ -56,10 +56,10 @@ module.exports = {
         res.status(200).json({ status: true });
       }
     } catch (error) {
-      res.json({ message: "something gone wrong", status: false });
+      next(error)
     }
   },
-  postSignin: async (req, res) => {
+  postSignin: async (req, res,next) => {
     try {
       console.log(req.body);
       let organizerData = await Organizer.findOne({ email: req.body.email });
@@ -92,10 +92,10 @@ module.exports = {
         res.json({ message: "email does not exist", status: false });
       }
     } catch (error) {
-      res.json({ message: "something gone wrong", status: false });
+     next(error)
     }
   },
-  viewEvents: async (req, res) => {
+  viewEvents: async (req, res,next) => {
     try {
       const events = await Events.find({});
       console.log(events);
@@ -105,10 +105,10 @@ module.exports = {
         res.json({ status: false });
       }
     } catch (error) {
-      res.json({ status: false, message: error });
+      next(error)
     }
   },
-  profile: async (req, res) => {
+  profile: async (req, res,next) => {
     try {
       const organizer_Id = req.organizer_Id;
       const profile = await Organizer.findById(organizer_Id, {
@@ -118,10 +118,10 @@ module.exports = {
 
       res.json({ profile });
     } catch (error) {
-      res.json({ message: error });
+      next(error)
     }
   },
-  updateProfile: async (req, res) => {
+  updateProfile: async (req, res,next) => {
     try {
       const organizer_Id = req.organizer_Id;
       const {
@@ -165,7 +165,7 @@ module.exports = {
         res.json({ status: false, message: "Profile not found" });
       }
     } catch (error) {
-      res.json({ status: false, message: error.message });
+      next(error)
     }
   },
   loadOrganizers: async (req, res,next) => {
@@ -192,9 +192,10 @@ module.exports = {
       }
       const total = await Organizer.countDocuments(query)
       const events = await Events.find({});
+      const review = await Review.find({})
        await Organizer.find({...query,status:true} ,{password: 0,status:0 } ).lean().sort({ createdAt: -1 }).skip(skip).limit(size).then((response)=>{
        
-        res.status(200).json({organizers:response, total,page,size,events})
+        res.status(200).json({organizers:response, total,page,size,events ,review})
        }).catch((error)=>{
         res.status(500).json({message:'something went wrong'})
        })

@@ -7,7 +7,7 @@ const User = require("../models/userModel");
 const BookedEvents = require("../models/bookedEventsModel");
 const Review = require("../models/reviewModal");
 module.exports = {
-  postSignin: async (req, res) => {
+  postSignin: async (req, res, next) => {
     try {
       const { email, password } = req.body;
       const adminData = await Admin.findOne({ email });
@@ -32,11 +32,11 @@ module.exports = {
         res.json({ message: "Email does not exist", status: false });
       }
     } catch (error) {
-      res.status(500).json({ message: "Something went wrong", status: false });
+      next(error);
     }
   },
 
-  adminAuth: async (req, res) => {
+  adminAuth: async (req, res, next) => {
     try {
       let adminData = await Admin.findById(req.adminId);
       if (adminData) {
@@ -54,7 +54,7 @@ module.exports = {
         res.json({ auth: false, message: "Admin not found", status: "error" });
       }
     } catch (error) {
-      res.json({ auth: false, message: error.message, status: "error" });
+      next(error);
     }
   },
 
@@ -77,7 +77,7 @@ module.exports = {
       next(error);
     }
   },
-  addEvents: async (req, res) => {
+  addEvents: async (req, res, next) => {
     try {
       if (req.file && req.file.path) {
         Event.create({
@@ -90,35 +90,35 @@ module.exports = {
         res.json({ status: false, message: "invalid image type" });
       }
     } catch (error) {
-      res.json({ message: error });
+      next(error);
     }
   },
-  loadEvents: async (req, res) => {
+  loadEvents: async (req, res, next) => {
     try {
       const events = await Event.find({});
 
       res.json({ events });
     } catch (error) {
-      res.json({ message: error });
+      next(error);
     }
   },
-  listOrganizers: async (req, res) => {
+  listOrganizers: async (req, res, next) => {
     try {
       const organizers = await Organizers.find({});
       res.json({ organizers });
     } catch (error) {
-      res.json({ message: error });
+      next(error);
     }
   },
-  listCustomers: async (req, res) => {
+  listCustomers: async (req, res, next) => {
     try {
       const customers = await User.find({});
       res.json({ customers });
     } catch (error) {
-      res.json({ message: error });
+      next(error);
     }
   },
-  viewOrganizer: async (req, res) => {
+  viewOrganizer: async (req, res, next) => {
     try {
       const { id } = req.body;
 
@@ -126,23 +126,28 @@ module.exports = {
       const bookedDates = booked.map((event) => event.eventScheduled);
       const count = booked.length;
 
-     const review = await Review.find({organizer: id}).populate('reviewedBy','username image createdAt')
-    
+      const review = await Review.find({ organizer: id }).populate(
+        "reviewedBy",
+        "username image createdAt"
+      );
+
       console.log(review);
       const organizer = await Organizers.findById(id);
       if (organizer) {
-        res.status(200).json({ status: true, organizer, bookedDates, count,review });
+        res
+          .status(200)
+          .json({ status: true, organizer, bookedDates, count, review });
       } else {
         res
           .status(401)
           .json({ status: false, message: "Something went wrong" });
       }
     } catch (error) {
-      res.json({ message: error });
+      next(error);
     }
   },
 
-  acceptOrganizer: async (req, res) => {
+  acceptOrganizer: async (req, res, next) => {
     try {
       const { id } = req.body;
       const organizer = await Organizers.findById(id);
@@ -157,7 +162,7 @@ module.exports = {
         res.json({ statuses: true });
       }
     } catch (error) {
-      res.json({ message: error });
+      next(error);
     }
   },
   eventOrganizers: async (req, res, next) => {

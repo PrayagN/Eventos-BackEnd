@@ -32,7 +32,9 @@ app.use('/public/eventsPhotos', express.static(path.join(__dirname, 'public/even
 app.use('/', userRoute);
 app.use('/admin', adminRoute);
 app.use('/organizer', organizerRoute);
-
+app.use((err, req, res, next) => {
+    console.error(err.stack)
+})
 // Start the server
 app.listen(3000, () => {
     console.log('Server is running on port 3000');

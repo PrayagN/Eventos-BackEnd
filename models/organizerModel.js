@@ -48,6 +48,10 @@ const organizerSchema = new mongoose.Schema({
     budget:{
         type:Number
     },
+    review:{
+        type:[mongoose.Schema.Types.ObjectId],
+        ref:'Review'
+    },
     
     status:{
         type:String,
