@@ -2,6 +2,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const BookedEvents = require("../models/bookedEventsModel");
+const Review = require('../models/reviewModal')
 module.exports = {
   userAuth: async (req, res) => {
     const userId = req.decoded.id;
@@ -12,7 +13,6 @@ module.exports = {
     try {
       let userData = await User.findById(userId, { _id: 0, password: 0 });
       if (userData && exp > date) {
-      
         res.status(200).json({
           auth: true,
           userData,
@@ -137,6 +137,42 @@ module.exports = {
         .then((response) => {
           res.status(200).json({ essentialData: response });
         });
+    } catch (error) {
+      next(error);
+    }
+  },
+  reviewOrganizer: async (req, res) => {
+    try {
+      const { id } = req.body;
+      const organizer_Id = id;
+      const user_id = req.decoded.id;
+      
+
+        await BookedEvents.findOne({ $and: [{ client: user_id }, { organizer: organizer_Id }] })
+       .then((response)=>{
+         if (response) {
+          if(!req.body.review){
+           res.status(200).json({ status: true });
+          }else{
+            Review.create({
+              reviewedBy:user_id,
+              organizer :organizer_Id,
+              rating:req.body.rating,
+              review:req.body.review
+            }).then((response)=>{
+              res.status(200).json({message:'review posted'})
+            })
+          }
+         } else {
+           throw new Error("You should want to book this organizer for rating");
+         }
+         
+       }).catch((error)=>{       
+           res.status(404).json({ message: "You should want to book this organizer for rating" });      })
+      
+     
+
+      
     } catch (error) {
       next(error);
     }

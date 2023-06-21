@@ -48,9 +48,7 @@ const organizerSchema = new mongoose.Schema({
     budget:{
         type:Number
     },
-    bookedEvents:{
-        type:Array
-    },
+    
     status:{
         type:String,
         default:'pending'

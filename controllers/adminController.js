@@ -5,7 +5,7 @@ const Event = require("../models/eventModel");
 const Organizers = require("../models/organizerModel");
 const User = require("../models/userModel");
 const BookedEvents = require("../models/bookedEventsModel");
-
+const Review = require("../models/reviewModal");
 module.exports = {
   postSignin: async (req, res) => {
     try {
@@ -58,18 +58,23 @@ module.exports = {
     }
   },
 
-  loadDashboard : async(req,res,next)=>{
+  loadDashboard: async (req, res, next) => {
     try {
-      const bookedEvents  = await BookedEvents.find()
-      const organizers = await Organizers.find({},{organizerName:1,logo:1,_id:1})
-      
-      const organizerCount = organizers.length
-      const necessaryData ={
-        bookedEvents,organizers,organizerCount,
-      }
-      res.status(200).json({necessaryData})
+      const bookedEvents = await BookedEvents.find();
+      const organizers = await Organizers.find(
+        {},
+        { organizerName: 1, logo: 1, _id: 1 }
+      );
+
+      const organizerCount = organizers.length;
+      const necessaryData = {
+        bookedEvents,
+        organizers,
+        organizerCount,
+      };
+      res.status(200).json({ necessaryData });
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
   addEvents: async (req, res) => {
@@ -121,10 +126,12 @@ module.exports = {
       const bookedDates = booked.map((event) => event.eventScheduled);
       const count = booked.length;
 
+     const review = await Review.find({organizer: id}).populate('reviewedBy','username image createdAt')
+    
+      console.log(review);
       const organizer = await Organizers.findById(id);
-
       if (organizer) {
-        res.status(200).json({ status: true, organizer, bookedDates, count });
+        res.status(200).json({ status: true, organizer, bookedDates, count,review });
       } else {
         res
           .status(401)
@@ -155,17 +162,42 @@ module.exports = {
   },
   eventOrganizers: async (req, res, next) => {
     try {
-      const { id } = req.body;
+      const id = req.body.id;
+      const page = parseInt(req.body.activePage) || 1;
+      const size = parseInt(req.body.size) || 2;
+      const skip = (page - 1) * size;
+      const searchQuery = req.body.searchQuery;
+
+      const query = {
+        status: true,
+      };
+      if (searchQuery) {
+        query.$or = [
+          { organizerName: { $regex: searchQuery, $options: "i" } },
+          { venue: { $regex: searchQuery, $options: "i" } },
+
+          { district: { $regex: searchQuery, $options: "i" } },
+        ];
+      }
+
       const event = await Event.findById(id);
       const eventPhoto = event?.image;
-      await Organizers.find({ eventId: id })
+      const total = await Organizers.countDocuments({ ...query, eventId: id });
+      await Organizers.find(
+        { ...query, status: true, eventId: id },
+        { password: 0, status: 0 }
+      )
+        .lean()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(size)
         .then((response) => {
-          return res.status(200).json({ organizers: response, eventPhoto });
+          res
+            .status(200)
+            .json({ organizers: response, total, page, size, eventPhoto });
         })
         .catch((error) => {
-          return res
-            .status(500)
-            .json({ message: "something went wrong while fetching data" });
+          res.status(500).json({ message: "something went wrong" });
         });
     } catch (error) {
       next(error);
