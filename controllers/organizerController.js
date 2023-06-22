@@ -34,7 +34,7 @@ module.exports = {
     try {
       let { organizerName, email, password, mobile, event } = req.body;
       console.log(req.body);
-      const eventId = await Events.find({ title: event }, { _id: 1 });
+      const eventId = (await Events.find({ title: event }, { _id: 1 }))[0]._id
       let organizer = await Organizer.findOne({ email: email });
       if (organizer) {
         res.json({ status: false, message: "email already exists" });
@@ -171,7 +171,7 @@ module.exports = {
   loadOrganizers: async (req, res,next) => {
     try {
       const page = parseInt(req.query.activePage) || 1;
-      const size = parseInt(req.params.size) || 2;
+      const size = parseInt(req.query.organizerLimitPerPage) || 1;
       const skip = (page - 1) * size;
       const searchQuery = req.query.searchQuery;
       const selectedEvent = req.query.selectedEvent;
@@ -193,7 +193,8 @@ module.exports = {
       const total = await Organizer.countDocuments(query)
       const events = await Events.find({});
       const review = await Review.find({})
-       await Organizer.find({...query,status:true} ,{password: 0,status:0 } ).lean().sort({ createdAt: -1 }).skip(skip).limit(size).then((response)=>{
+       await Organizer.find({...query,status:true} ,{password: 0,status:0 } ).populate('review').lean().sort({ createdAt: -1 }).skip(skip).limit(size).then((response)=>{
+        console.log(response);
        
         res.status(200).json({organizers:response, total,page,size,events ,review})
        }).catch((error)=>{

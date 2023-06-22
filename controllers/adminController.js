@@ -65,12 +65,14 @@ module.exports = {
         {},
         { organizerName: 1, logo: 1, _id: 1 }
       );
+      const count = organizers.length
 
       const organizerCount = organizers.length;
       const necessaryData = {
         bookedEvents,
         organizers,
         organizerCount,
+        count
       };
       res.status(200).json({ necessaryData });
     } catch (error) {
@@ -168,8 +170,8 @@ module.exports = {
   eventOrganizers: async (req, res, next) => {
     try {
       const id = req.body.id;
-      const page = parseInt(req.body.activePage) || 1;
-      const size = parseInt(req.body.size) || 2;
+      const page = Math.floor(req.body.activePage) || 1;
+      const size = Math.floor(req.body.size) || 2;
       const skip = (page - 1) * size;
       const searchQuery = req.body.searchQuery;
 
@@ -180,7 +182,6 @@ module.exports = {
         query.$or = [
           { organizerName: { $regex: searchQuery, $options: "i" } },
           { venue: { $regex: searchQuery, $options: "i" } },
-
           { district: { $regex: searchQuery, $options: "i" } },
         ];
       }
@@ -197,9 +198,11 @@ module.exports = {
         .skip(skip)
         .limit(size)
         .then((response) => {
+          
           res
             .status(200)
             .json({ organizers: response, total, page, size, eventPhoto });
+
         })
         .catch((error) => {
           res.status(500).json({ message: "something went wrong" });

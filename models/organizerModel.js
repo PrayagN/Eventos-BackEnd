@@ -33,7 +33,7 @@ const organizerSchema = new mongoose.Schema({
     eventId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Events',
-        required:true
+        
     },
     venue:{
         type:String,
@@ -67,7 +67,6 @@ const organizerSchema = new mongoose.Schema({
     },
     advance:{
         type:Number,
-        required:true,
         min:0,
         max:100
     }
