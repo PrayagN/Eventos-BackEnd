@@ -65,14 +65,19 @@ module.exports = {
         {},
         { organizerName: 1, logo: 1, _id: 1 }
       );
-      const count = organizers.length
+      const clients =(await User.find({},{username:1}))
 
+      
       const organizerCount = organizers.length;
+      const clientCount = clients.length
+      const bookedCount = bookedEvents.length
       const necessaryData = {
         bookedEvents,
         organizers,
         organizerCount,
-        count
+        clientCount,
+        bookedCount
+        
       };
       res.status(200).json({ necessaryData });
     } catch (error) {
@@ -215,8 +220,8 @@ module.exports = {
     try {
       const bookedEvents = await BookedEvents.find({})
         .populate("organizer")
-        .populate("client");
-
+        .populate("client",'-_id -password');
+      
       const necessaryData = bookedEvents.map((event) => ({
         _id: event._id,
         totalAmount: event.totalAmount,
