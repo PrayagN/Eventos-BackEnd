@@ -1,11 +1,15 @@
+require("dotenv").config();
+
 const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const BookedEvents = require("../models/bookedEventsModel");
-const Review = require('../models/reviewModal')
-const Organizer = require('../models/organizerModel')
+const Review = require("../models/reviewModal");
+const Organizer = require("../models/organizerModel");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 module.exports = {
-  userAuth: async (req, res,next) => {
+  userAuth: async (req, res, next) => {
     const userId = req.decoded.id;
 
     const exp = req.decoded.exp * 1000;
@@ -26,19 +30,18 @@ module.exports = {
         console.log("expired");
       }
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-  postSignup: async (req, res,next) => {
+  postSignup: async (req, res, next) => {
     try {
-      
       const user = await User.findOne({ email: req.body.email });
-      
+
       if (user) {
         res.json({ status: false, message: "email already exists" });
       } else if (req.body.otp) {
         const password1 = await bcrypt.hash(req.body.password, 10);
-        
+
         User.create({
           username: req.body.username,
           email: req.body.email,
@@ -50,7 +53,7 @@ module.exports = {
         });
       } else if (req.body.exp) {
         const password1 = await bcrypt.hash(req.body.password, 10);
-        
+
         User.create({
           username: req.body.username,
           email: req.body.email,
@@ -59,20 +62,24 @@ module.exports = {
         }).then((data) => {
           // userSignup.Status = true,
           let userData = User.findOne({ email: req.body.email });
-          let token = jwt.sign({ id: userData._id }, process.env.JWT_SECRET_KEY, {
-            expiresIn: "1d",
-          });
+          let token = jwt.sign(
+            { id: userData._id },
+            process.env.JWT_SECRET_KEY,
+            {
+              expiresIn: "1d",
+            }
+          );
           res.status(200).json({ status: true, token });
         });
       } else {
         res.status(200).json({ status: true });
       }
     } catch (error) {
-      next(error)
+      next(error);
     }
-    },
-    
-    postSignin: async (req, res,next) => {
+  },
+
+  postSignin: async (req, res, next) => {
     try {
       let userData = await User.findOne({ email: req.body.email });
 
@@ -101,19 +108,19 @@ module.exports = {
         res.json({ message: "email does not exist", status: false });
       }
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-  loadProfile: async (req, res,next) => {
+  loadProfile: async (req, res, next) => {
     try {
       const user_id = req.decoded.id;
       const profile = await User.findById(user_id, { _id: 0, password: 0 });
       res.status(200).json({ profile });
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-  updateProfile: async (req, res,next) => {
+  updateProfile: async (req, res, next) => {
     try {
       const user_id = req.decoded.id;
       const { username, mobile, district, state, imageUrl } = req.body;
@@ -130,7 +137,7 @@ module.exports = {
       }
       res.status(200).json({ status: true, message: "successfully updated" });
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
   bookedEvents: (req, res, next) => {
@@ -151,19 +158,21 @@ module.exports = {
       const { id } = req.body;
       const organizer_Id = id;
       const user_id = req.decoded.id;
-  
+
       const bookedEvent = await BookedEvents.findOne({
         $and: [{ client: user_id }, { organizer: organizer_Id }],
       });
-  
+
       if (bookedEvent) {
         const existingReview = await Review.findOne({
           reviewedBy: user_id,
           organizer: organizer_Id,
         }).populate("reviewedBy");
-  
+
         if (existingReview) {
-          res.status(200).json({ message: "You already reviewed this organizer!" });
+          res
+            .status(200)
+            .json({ message: "You already reviewed this organizer!" });
         } else {
           if (!req.body.review) {
             res.status(200).json({ status: true });
@@ -174,12 +183,12 @@ module.exports = {
               rating: req.body.rating,
               review: req.body.review,
             });
-  
+
             await Organizer.findByIdAndUpdate(
               { _id: organizer_Id },
               { $set: { review: review._id } }
             );
-  
+
             res.status(200).json({ message1: "Review posted successfully!" });
           }
         }
@@ -187,10 +196,55 @@ module.exports = {
         throw new Error("You should book this organizer to submit a review.");
       }
     } catch (error) {
-      res.status(404).json({ message: "You should want to book this organizer for rating" });      
+      res
+        .status(404)
+        .json({ message: "You should want to book this organizer for rating" });
       next(error);
     }
   },
-  
-  
+  cancelBooking: async (req, res, next) => {
+    try {
+      const booking_id = req.body.id;
+      const payment = await BookedEvents.findById(
+        { _id: booking_id },
+        { paymentIntentId: 1, advanceAmount: 1, eventScheduled: 1 }
+      );
+      const today = new Date();
+      const eventDate = new Date(payment.eventScheduled);
+      function getDaysDifference(date1, date2) {
+        const oneDay = 24 * 60 * 60 * 1000;
+        return Math.round(Math.abs((date1 - date2) / oneDay));
+      }
+      let amount;
+      const difference = getDaysDifference(today, eventDate);
+      if (difference <= 7) {
+        amount = payment.advanceAmount - payment.advanceAmount * 0.5;
+      } else {
+        amount = payment.advanceAmount - payment.advanceAmount * 0.25;
+      }
+
+      await BookedEvents.findByIdAndUpdate(
+        { _id: booking_id },
+        {
+          $set: {
+            payment: "Cancelled",
+            fine: amount,
+            totalAmount: amount,
+            advanceAmount: 0,
+          },
+        },
+        { upsert: true, new: true }
+      );
+
+      const refund = await stripe.refunds.create({
+        payment_intent: payment.paymentIntentId,
+        amount: amount * 100,
+      });
+
+      res.status(200).json({ message: "Successfully cancelled" });
+    } catch (error) {
+      res.status(500).json({ message: "Something went wrong" });
+      console.log(error);
+    }
+  },
 };
