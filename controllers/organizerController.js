@@ -224,9 +224,27 @@ module.exports = {
         .populate("client", "username image email")
         .then((response) => {
           res.status(200).json({ detail: response });
-        }).catch((error)=>{
-          res.status(500).json({message:'something went wrong'})
         })
+        .catch((error) => {
+          res.status(500).json({ message: "something went wrong" });
+        });
+    } catch (error) {
+      next(error);
+    }
+  },
+  updatePaymentStatus: async (req, res, next) => {
+    try {
+      const book_id = req.body.id;
+
+      await BookedEvents.findByIdAndUpdate(book_id, {
+        $set: { payment: "Full paid" },
+      })
+        .then((response) => {
+          res.status(200).json({ message: "payment status updated" });
+        })
+        .catch((error) => {
+          res.status(500).json({ message: "something went wrong" });
+        });
     } catch (error) {
       next(error);
     }

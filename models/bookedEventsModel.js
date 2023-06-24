@@ -38,6 +38,10 @@ const BookedEventsSchema = new  mongoose.Schema({
     payment:{
         type:String,
         required:true
+    },
+    paymentIntentId:{
+        type:String,
+        
     }
 
 },{timestamps:true})

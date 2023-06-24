@@ -57,10 +57,10 @@ const organizerSchema = new mongoose.Schema({
         type:String,
         default:'pending'
     },
-    upcomingEvents:{
-        type:[mongoose.Schema.Types.ObjectId],
+    bookedEvents:[{
+        type:mongoose.Schema.Types.ObjectId,
         ref:'BookedEvents',
-    },
+    }],
     paymentStatus:{
         type:String,
         default:'Advance Only'
