@@ -60,24 +60,41 @@ module.exports = {
 
   loadDashboard: async (req, res, next) => {
     try {
-      const bookedEvents = await BookedEvents.find();
+      const bookedEvents = await BookedEvents.find().populate("organizer",'-id -password')
+      .populate("client", "-_id -password");
+      const bookedData = bookedEvents.map((event) => ({
+      
+        totalAmount: event.totalAmount,
+        advanceAmount: event.advanceAmount,
+        organizerName: event.organizer.organizerName,
+        clientName: event.client.username,
+        event: event.organizer.event,
+        eventScheduled: event.eventScheduled,
+        paymentStatus: event.payment,
+      }));
+
+      let totalEarning = 0;
+      bookedEvents.forEach((money) => {
+        totalEarning += money.totalAmount;
+      });
+
       const organizers = await Organizers.find(
         {},
         { organizerName: 1, logo: 1, _id: 1 }
       );
-      const clients =(await User.find({},{username:1}))
+      const clients = await User.find({}, { username: 1 });
 
-      
       const organizerCount = organizers.length;
-      const clientCount = clients.length
-      const bookedCount = bookedEvents.length
+      const clientCount = clients.length;
+      const bookedCount = bookedEvents.length;
       const necessaryData = {
         bookedEvents,
         organizers,
         organizerCount,
         clientCount,
-        bookedCount
-        
+        bookedCount,
+        totalEarning,
+        bookedData
       };
       res.status(200).json({ necessaryData });
     } catch (error) {
@@ -203,11 +220,9 @@ module.exports = {
         .skip(skip)
         .limit(size)
         .then((response) => {
-          
           res
             .status(200)
             .json({ organizers: response, total, page, size, eventPhoto });
-
         })
         .catch((error) => {
           res.status(500).json({ message: "something went wrong" });
@@ -220,8 +235,8 @@ module.exports = {
     try {
       const bookedEvents = await BookedEvents.find({})
         .populate("organizer")
-        .populate("client",'-_id -password');
-      
+        .populate("client", "-_id -password");
+
       const necessaryData = bookedEvents.map((event) => ({
         _id: event._id,
         totalAmount: event.totalAmount,

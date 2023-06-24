@@ -2,10 +2,11 @@ const Organizer = require("../models/organizerModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Events = require("../models/eventModel");
-const Review = require('../models/reviewModal')
+const Review = require("../models/reviewModal");
+const BookedEvents = require("../models/bookedEventsModel");
 
 module.exports = {
-  organizerAuth: async (req, res,next) => {
+  organizerAuth: async (req, res, next) => {
     try {
       let organizerData = await Organizer.findById(req.organizer_Id);
 
@@ -27,14 +28,14 @@ module.exports = {
         });
       }
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-  postSignup: async (req, res,next) => {
+  postSignup: async (req, res, next) => {
     try {
       let { organizerName, email, password, mobile, event } = req.body;
       console.log(req.body);
-      const eventId = (await Events.find({ title: event }, { _id: 1 }))[0]._id
+      const eventId = (await Events.find({ title: event }, { _id: 1 }))[0]._id;
       let organizer = await Organizer.findOne({ email: email });
       if (organizer) {
         res.json({ status: false, message: "email already exists" });
@@ -56,10 +57,10 @@ module.exports = {
         res.status(200).json({ status: true });
       }
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-  postSignin: async (req, res,next) => {
+  postSignin: async (req, res, next) => {
     try {
       console.log(req.body);
       let organizerData = await Organizer.findOne({ email: req.body.email });
@@ -92,10 +93,10 @@ module.exports = {
         res.json({ message: "email does not exist", status: false });
       }
     } catch (error) {
-     next(error)
+      next(error);
     }
   },
-  viewEvents: async (req, res,next) => {
+  viewEvents: async (req, res, next) => {
     try {
       const events = await Events.find({});
       console.log(events);
@@ -105,10 +106,10 @@ module.exports = {
         res.json({ status: false });
       }
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-  profile: async (req, res,next) => {
+  profile: async (req, res, next) => {
     try {
       const organizer_Id = req.organizer_Id;
       const profile = await Organizer.findById(organizer_Id, {
@@ -118,10 +119,10 @@ module.exports = {
 
       res.json({ profile });
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-  updateProfile: async (req, res,next) => {
+  updateProfile: async (req, res, next) => {
     try {
       const organizer_Id = req.organizer_Id;
       const {
@@ -165,17 +166,17 @@ module.exports = {
         res.json({ status: false, message: "Profile not found" });
       }
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-  loadOrganizers: async (req, res,next) => {
+  loadOrganizers: async (req, res, next) => {
     try {
       const page = parseInt(req.query.activePage) || 1;
       const size = parseInt(req.query.organizerLimitPerPage) || 1;
       const skip = (page - 1) * size;
       const searchQuery = req.query.searchQuery;
       const selectedEvent = req.query.selectedEvent;
-    
+
       const query = {
         status: true,
       };
@@ -187,21 +188,47 @@ module.exports = {
           { district: { $regex: searchQuery, $options: "i" } },
         ];
       }
-      if(selectedEvent !=='All'){
-        query.event = selectedEvent 
+      if (selectedEvent !== "All") {
+        query.event = selectedEvent;
       }
-      const total = await Organizer.countDocuments(query)
+      const total = await Organizer.countDocuments(query);
       const events = await Events.find({});
-      const review = await Review.find({})
-       await Organizer.find({...query,status:true} ,{password: 0,status:0 } ).populate('review').lean().sort({ createdAt: -1 }).skip(skip).limit(size).then((response)=>{
-        console.log(response);
-       
-        res.status(200).json({organizers:response, total,page,size,events ,review})
-       }).catch((error)=>{
-        res.status(500).json({message:'something went wrong'})
-       })
+      const review = await Review.find({});
+      await Organizer.find(
+        { ...query, status: true },
+        { password: 0, status: 0 }
+      )
+        .populate("review")
+        .lean()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(size)
+        .then((response) => {
+          console.log(response);
+
+          res
+            .status(200)
+            .json({ organizers: response, total, page, size, events, review });
+        })
+        .catch((error) => {
+          res.status(500).json({ message: "something went wrong" });
+        });
     } catch (error) {
-      next(error)
+      next(error);
+    }
+  },
+  bookedClients: async (req, res, next) => {
+    try {
+      const organizer_Id = req.organizer_Id;
+      await BookedEvents.find({ organizer: organizer_Id })
+        .populate("client", "username image email")
+        .then((response) => {
+          res.status(200).json({ detail: response });
+        }).catch((error)=>{
+          res.status(500).json({message:'something went wrong'})
+        })
+    } catch (error) {
+      next(error);
     }
   },
 };

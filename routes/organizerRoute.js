@@ -9,4 +9,5 @@ organizerRoute.post('/signin',organizerController.postSignin)
 organizerRoute.get('/viewEvents',organizerController.viewEvents)
 organizerRoute.get('/profile',organizerProtect,organizerController.profile)
 organizerRoute.post('/updateProfile',organizerProtect,organizerController.updateProfile)
+organizerRoute.get('/booked-clients',organizerProtect,organizerController.bookedClients)
 module.exports = organizerRoute
