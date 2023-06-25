@@ -7,7 +7,6 @@ const BookedEvents = require("../models/bookedEventsModel");
 const Review = require("../models/reviewModal");
 const Organizer = require("../models/organizerModel");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
 module.exports = {
   userAuth: async (req, res, next) => {
     const userId = req.decoded.id;
@@ -247,4 +246,5 @@ module.exports = {
       console.log(error);
     }
   },
+  
 };

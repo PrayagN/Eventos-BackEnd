@@ -4,6 +4,7 @@ const userController = require("../controllers/userController");
 const adminController = require("../controllers/adminController");
 const organizerController = require("../controllers/organizerController");
 const paymentController = require('../controllers/paymentController')
+const chatBotController = require('../controllers/chatBotController')
 const { userProtect } = require("../middleware/Auth")
 userRoute.get('/isUserAuth',userProtect, userController.userAuth);
 userRoute.post("/signup", userController.postSignup);
@@ -23,6 +24,8 @@ userRoute.post('/cancel-booking',userProtect,userController.cancelBooking)
 
 
 userRoute.post('/create-checkout-session',userProtect,paymentController.checkoutPayment)
-userRoute.get('/verifyPayment/:order_id/:organizer_id',paymentController.verifyPayment)
-userRoute.get('/cancelPayment/:order_id',paymentController.cancelPayment)
+userRoute.get('/verifyPayment/:order_id/:organizer_id',userProtect,paymentController.verifyPayment)
+userRoute.get('/cancelPayment/:order_id',userProtect,paymentController.cancelPayment)
+
+userRoute.post('/chatbot',chatBotController.chatBot)
 module.exports = userRoute;
