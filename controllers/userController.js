@@ -227,7 +227,7 @@ module.exports = {
         { _id: booking_id },
         {
           $set: {
-            payment: "Cancelled",
+            payment: "Refunded",
             fine: amount,
             totalAmount: amount,
             advanceAmount: 0,

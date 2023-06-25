@@ -219,11 +219,23 @@ module.exports = {
   },
   bookedClients: async (req, res, next) => {
     try {
+      const page =parseInt(req.query.activePage) || 1
+      const size =1
+      const skip =(page-1)*size
+      const searchQuery =req.query.searchQuery
+      const query={}
+      if (searchQuery) {
+        query.$or = [
+          { 'client.username' : { $regex: searchQuery,$options: "i" } },
+          { payment: { $regex: new RegExp(searchQuery, "i") } },
+        ];
+      }
       const organizer_Id = req.organizer_Id;
-      await BookedEvents.find({ organizer: organizer_Id })
-        .populate("client", "username image email")
+      const total = await BookedEvents.find({organizer:organizer_Id}).countDocuments()
+      await BookedEvents.find({ ...query,organizer: organizer_Id })
+        .populate("client", "username image email").lean().sort({createdAt:1}).skip(skip).limit(size)
         .then((response) => {
-          res.status(200).json({ detail: response });
+          res.status(200).json({ detail: response ,total,page,size });
         })
         .catch((error) => {
           res.status(500).json({ message: "something went wrong" });

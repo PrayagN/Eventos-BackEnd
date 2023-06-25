@@ -60,10 +60,10 @@ module.exports = {
 
   loadDashboard: async (req, res, next) => {
     try {
-      const bookedEvents = await BookedEvents.find().populate("organizer",'-id -password')
-      .populate("client", "-_id -password");
+      const bookedEvents = await BookedEvents.find()
+        .populate("organizer", "-id -password")
+        .populate("client", "-_id -password");
       const bookedData = bookedEvents.map((event) => ({
-      
         totalAmount: event.totalAmount,
         advanceAmount: event.advanceAmount,
         organizerName: event.organizer.organizerName,
@@ -86,7 +86,7 @@ module.exports = {
 
       const organizerCount = organizers.length;
       const clientCount = clients.length;
-      const bookedCount = bookedEvents.length;
+      const bookedCount =await BookedEvents.countDocuments({advanceAmount:{$ne:0}})
       const necessaryData = {
         bookedEvents,
         organizers,
@@ -94,7 +94,7 @@ module.exports = {
         clientCount,
         bookedCount,
         totalEarning,
-        bookedData
+        bookedData,
       };
       res.status(200).json({ necessaryData });
     } catch (error) {
@@ -136,8 +136,26 @@ module.exports = {
   },
   listCustomers: async (req, res, next) => {
     try {
-      const customers = await User.find({});
-      res.json({ customers });
+      const page = parseInt(req.query.activePage) || 1;
+      const size = 5;
+      const skip = (page - 1) * size;
+      const searchQuery = req.query.searchValue;
+      const query = {};
+      if (searchQuery) {
+        query.$or = [
+          { username: { $regex: searchQuery, $options: "i" } },
+          { email: { $regex: searchQuery, $options: "i" } },
+          { mobile: { $regex: searchQuery, $options: "i" } }, // Add phone number search
+
+        ];
+      }
+      const total = await User.find().countDocuments()
+       await User.find(query,{password:0,_id:0}).lean().sort({createdAt:1}).skip(skip).limit(size).then((response)=>{
+        
+         res.status(200).json({ customers:response, total,page,size });
+       }).catch((error)=>{
+        res.status(500).json({message:'something went wrong'})
+       })
     } catch (error) {
       next(error);
     }
