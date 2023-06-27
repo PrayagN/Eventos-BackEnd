@@ -14,8 +14,9 @@ module.exports ={
     },
     getMessages :async(req,res,next)=>{
         try {
-            console.log(req.params.id);
-            const messages =await message.find({connection_id:req.params.id})
+
+            const messages =await message.find({connection_id:req.params.id}).populate('connection_id')
+            console.log(messages);
             res.status(200).json(messages)
         } catch (error) {
             next(error)
