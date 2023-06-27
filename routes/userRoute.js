@@ -5,6 +5,7 @@ const adminController = require("../controllers/adminController");
 const organizerController = require("../controllers/organizerController");
 const paymentController = require('../controllers/paymentController')
 const chatBotController = require('../controllers/chatBotController')
+const messageController = require('../controllers/messageController')
 const { userProtect } = require("../middleware/Auth")
 userRoute.get('/isUserAuth',userProtect, userController.userAuth);
 userRoute.post("/signup", userController.postSignup);
@@ -29,4 +30,8 @@ userRoute.get('/cancelPayment/:order_id',userProtect,paymentController.cancelPay
 
 // userRoute.post('/chatbot',chatBotController.chatBot)
 userRoute.post('/buildConnection',userProtect,chatBotController.chatConnection)
+userRoute.get('/getConnections',userProtect,chatBotController.getConnections)
+
+userRoute.post('/sendMessage',userProtect,messageController.sendMessage)
+userRoute.get('/getMessages/:id',userProtect,messageController.getMessages)
 module.exports = userRoute;
