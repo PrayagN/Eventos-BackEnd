@@ -16,7 +16,7 @@ module.exports ={
         try {
 
             const messages =await message.find({connection_id:req.params.id}).populate('connection_id')
-            console.log(messages);
+            
             res.status(200).json(messages)
         } catch (error) {
             next(error)
