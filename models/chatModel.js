@@ -1,6 +1,12 @@
 const mongoose = require('mongoose')
 
 const chatSchema = new mongoose.Schema({
+
+    connection_id :{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Connections',
+        required:true
+    },
     senderId:{
         type :mongoose.Schema.Types.ObjectId,
         ref:'User',

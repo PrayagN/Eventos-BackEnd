@@ -27,5 +27,6 @@ userRoute.post('/create-checkout-session',userProtect,paymentController.checkout
 userRoute.get('/verifyPayment/:order_id/:organizer_id',userProtect,paymentController.verifyPayment)
 userRoute.get('/cancelPayment/:order_id',userProtect,paymentController.cancelPayment)
 
-userRoute.post('/chatbot',chatBotController.chatBot)
+// userRoute.post('/chatbot',chatBotController.chatBot)
+userRoute.post('/buildConnection',userProtect,chatBotController.chatConnection)
 module.exports = userRoute;
