@@ -39,8 +39,8 @@ module.exports = {
           path: "members.organizer",
           select: "organizerName logo",
           model: "Organizer",
-        }).then((response)=>{
-        
+        }).populate('lastMessage').then((response)=>{
+        console.log(response);
           res.status(200).json({connections:response,status:true})
         }).catch((error)=>{
           res.status(500).json({message:'internal error occurred'})

@@ -96,6 +96,30 @@ module.exports = {
       next(error);
     }
   },
+  loadDashboard: async (req, res, next) => {
+    try {
+      const organizer_Id = req.organizer_Id;
+      const booked = await BookedEvents.find({ organizer: organizer_Id });
+      const totalBooking = booked.length;
+      let totalEarning = 0;
+      booked.forEach((money) => {
+        totalEarning += money.totalAmount;
+      });
+
+      const cancelled = await BookedEvents.find({
+        organizer: organizer_Id,
+        payment: "Refunded",
+      }).count();
+      const upcoming = await BookedEvents.find({
+        organizer: organizer_Id,
+        payment: "Advance Only",
+      }).count();
+      res.status(200).json({ totalBooking, cancelled, upcoming, totalEarning });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   viewEvents: async (req, res, next) => {
     try {
       const events = await Events.find({});
@@ -141,7 +165,7 @@ module.exports = {
       let profileData = await Organizer.findById(organizer_Id);
 
       let newImages = profileData.images.concat(imageUrl);
-
+      const District = district.toLowerCase();
       if (profileData) {
         await Organizer.findByIdAndUpdate(organizer_Id, {
           organizerName,
@@ -169,6 +193,7 @@ module.exports = {
       next(error);
     }
   },
+
   loadOrganizers: async (req, res, next) => {
     try {
       const page = parseInt(req.query.activePage) || 1;
@@ -176,10 +201,12 @@ module.exports = {
       const skip = (page - 1) * size;
       const searchQuery = req.query.searchQuery;
       const selectedEvent = req.query.selectedEvent;
-
+      const selectedDistrict = req.query.selectedDistrict;
+  
       const query = {
         status: true,
       };
+  
       if (searchQuery) {
         query.$or = [
           { organizerName: { $regex: searchQuery, $options: "i" } },
@@ -188,13 +215,27 @@ module.exports = {
           { district: { $regex: searchQuery, $options: "i" } },
         ];
       }
+  
       if (selectedEvent !== "All") {
         query.event = selectedEvent;
       }
+  
+      if (selectedDistrict) {
+        query.district = selectedDistrict;
+      }
+  
       const total = await Organizer.countDocuments(query);
       const events = await Events.find({});
       const review = await Review.find({});
-      await Organizer.find(
+      const organizer = await Organizer.find();
+  
+      const districtSet = new Set();
+      organizer.forEach((organizer) => {
+        districtSet.add(organizer.district);
+      });
+      const district = Array.from(districtSet);
+  
+      const response = await Organizer.find(
         { ...query, status: true },
         { password: 0, status: 0 }
       )
@@ -202,40 +243,47 @@ module.exports = {
         .lean()
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(size)
-        .then((response) => {
-          console.log(response);
-
-          res
-            .status(200)
-            .json({ organizers: response, total, page, size, events, review });
-        })
-        .catch((error) => {
-          res.status(500).json({ message: "something went wrong" });
-        });
+        .limit(size);
+  
+      res.status(200).json({
+        organizers: response,
+        total,
+        page,
+        size,
+        events,
+        review,
+        district,
+      });
     } catch (error) {
-      next(error);
+      res.status(500).json({ message: "Something went wrong" });
     }
   },
+  
   bookedClients: async (req, res, next) => {
     try {
-      const page =parseInt(req.query.activePage) || 1
-      const size =1
-      const skip =(page-1)*size
-      const searchQuery =req.query.searchQuery
-      const query={}
+      const page = parseInt(req.query.activePage) || 1;
+      const size = 1;
+      const skip = (page - 1) * size;
+      const searchQuery = req.query.searchQuery;
+      const query = {};
       if (searchQuery) {
         query.$or = [
-          { 'client.username' : { $regex: searchQuery,$options: "i" } },
+          { "client.username": { $regex: searchQuery, $options: "i" } },
           { payment: { $regex: new RegExp(searchQuery, "i") } },
         ];
       }
       const organizer_Id = req.organizer_Id;
-      const total = await BookedEvents.find({organizer:organizer_Id}).countDocuments()
-      await BookedEvents.find({ ...query,organizer: organizer_Id })
-        .populate("client", "username image email").lean().sort({createdAt:1}).skip(skip).limit(size)
+      const total = await BookedEvents.find({
+        organizer: organizer_Id,
+      }).countDocuments();
+      await BookedEvents.find({ ...query, organizer: organizer_Id })
+        .populate("client", "username image email")
+        .lean()
+        .sort({ createdAt: 1 })
+        .skip(skip)
+        .limit(size)
         .then((response) => {
-          res.status(200).json({ detail: response ,total,page,size });
+          res.status(200).json({ detail: response, total, page, size });
         })
         .catch((error) => {
           res.status(500).json({ message: "something went wrong" });
@@ -261,5 +309,4 @@ module.exports = {
       next(error);
     }
   },
-  
 };

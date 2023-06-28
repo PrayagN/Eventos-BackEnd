@@ -14,6 +14,8 @@ organizerRoute.post('/updateProfile',organizerProtect,organizerController.update
 organizerRoute.get('/booked-clients',organizerProtect,organizerController.bookedClients)
 organizerRoute.put('/update-payment',organizerProtect,organizerController.updatePaymentStatus)
 
+organizerRoute.get('/load-dashboard',organizerProtect,organizerController.loadDashboard)
+
 organizerRoute.get('/getOrganizerConnection',organizerProtect,chatBotController.getOrganizerConnection)
 organizerRoute.post('/organizer-sendMessage',organizerProtect,messageController.sendMessage)
 organizerRoute.get('/organizer-getMessages/:id',organizerProtect,messageController.getMessages)

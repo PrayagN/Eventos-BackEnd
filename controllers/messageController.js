@@ -2,16 +2,22 @@ const message = require('../models/chatModel')
 const connections = require('../models/connectionModel')
 
 module.exports ={
-    sendMessage:async(req,res,next)=>{
+    sendMessage: async (req, res, next) => {
         try {
-            console.log(req.body);
-            const newMessage = new message(req.body)
-            const savedMessage =await newMessage.save()
-            res.status(200).json(savedMessage)
+          console.log(req.body);
+          const newMessage = new message(req.body);
+          const savedMessage = await newMessage.save();
+      
+          await connections.findByIdAndUpdate(savedMessage.connection_id, {
+            $set: { lastMessage: savedMessage._id }
+          });
+      
+          res.status(200).json(savedMessage);
         } catch (error) {
-            next(error)
+          next(error);
         }
-    },
+      },
+      
     getMessages :async(req,res,next)=>{
         try {
 

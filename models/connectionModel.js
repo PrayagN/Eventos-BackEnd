@@ -15,7 +15,9 @@ const connectionSchema = new mongoose.Schema({
         }
     },
     lastMessage:{
-        type:ObjectId
+        type:ObjectId,
+        ref:'Chat',
+        // default:null
     }
 
 },{timestamps:true})
