@@ -227,8 +227,36 @@ module.exports = {
       }
 
       const event = await Event.findById(id);
+      
       const eventPhoto = event?.image;
       const total = await Organizers.countDocuments({ ...query, eventId: id });
+      const rating = await Organizers.aggregate([
+        {
+          $lookup: {
+            from: "reviews",
+            localField: "_id",
+            foreignField: "organizer",
+            as: "reviews",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            reviewCount: { $size: "$reviews" },
+            ratingCount: { $sum: "$reviews.rating" },
+          },
+        },
+      ]);
+
+      rating.forEach((organizer) => {
+        if (organizer.ratingCount !== 0) {
+          organizer.ratings =
+            organizer.ratingCount / (organizer.reviewCount * 5)*5;
+        } else {
+          organizer.rating = 0; // or any default value you want to assign when ratingCount is zero
+        }
+      });
       await Organizers.find(
         { ...query, status: true, eventId: id },
         { password: 0, status: 0 }
@@ -240,7 +268,7 @@ module.exports = {
         .then((response) => {
           res
             .status(200)
-            .json({ organizers: response, total, page, size, eventPhoto });
+            .json({ organizers: response, total, page, size, eventPhoto,rating });
         })
         .catch((error) => {
           res.status(500).json({ message: "something went wrong" });

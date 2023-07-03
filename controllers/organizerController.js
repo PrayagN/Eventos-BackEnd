@@ -202,11 +202,11 @@ module.exports = {
       const searchQuery = req.query.searchQuery;
       const selectedEvent = req.query.selectedEvent;
       const selectedDistrict = req.query.selectedDistrict;
-  
+
       const query = {
         status: true,
       };
-  
+
       if (searchQuery) {
         query.$or = [
           { organizerName: { $regex: searchQuery, $options: "i" } },
@@ -215,54 +215,55 @@ module.exports = {
           { district: { $regex: searchQuery, $options: "i" } },
         ];
       }
-  
+
       if (selectedEvent !== "All") {
         query.event = selectedEvent;
       }
-  
+
       if (selectedDistrict) {
         query.district = selectedDistrict;
       }
-  
+
       const total = await Organizer.countDocuments(query);
       const events = await Events.find({});
       const review = await Review.find({});
       const organizer = await Organizer.find();
-      const organizers = await Organizer.aggregate([
+      const rating = await Organizer.aggregate([
         {
           $lookup: {
             from: "reviews",
             localField: "_id",
             foreignField: "organizer",
-            as: "reviews"
-          }
+            as: "reviews",
+          },
         },
         {
           $project: {
             _id: 1,
             name: 1,
             reviewCount: { $size: "$reviews" },
-            ratingCount: { $sum: "$reviews.rating" }
-          }
-        }
+            ratingCount: { $sum: "$reviews.rating" },
+          },
+        },
       ]);
-      
-      organizers.forEach((organizer) => {
+
+      rating.forEach((organizer) => {
         if (organizer.ratingCount !== 0) {
-          organizer.rating = organizer.ratingCount / organizer.reviewCount;
+          organizer.ratings =
+            organizer.ratingCount / (organizer.reviewCount * 5)*5;
         } else {
           organizer.rating = 0; // or any default value you want to assign when ratingCount is zero
         }
-      });      
+      });
       // console.log(rating);
-      console.log(organizers);
-  
+      console.log(rating);
+
       const districtSet = new Set();
       organizer.forEach((organizer) => {
         districtSet.add(organizer.district);
       });
       const district = Array.from(districtSet);
-  
+
       const response = await Organizer.find(
         { ...query, status: true },
         { password: 0, status: 0 }
@@ -272,7 +273,7 @@ module.exports = {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(size);
-  
+
       res.status(200).json({
         organizers: response,
         total,
@@ -281,12 +282,13 @@ module.exports = {
         events,
         review,
         district,
+        rating
       });
     } catch (error) {
       res.status(500).json({ message: "Something went wrong" });
     }
   },
-  
+
   bookedClients: async (req, res, next) => {
     try {
       const page = parseInt(req.query.activePage) || 1;
@@ -295,7 +297,7 @@ module.exports = {
       const searchQuery = req.query.searchQuery;
       const query = {
         status: true,
-        organizer: req.organizer_Id
+        organizer: req.organizer_Id,
       };
       if (searchQuery) {
         query.$or = [
@@ -303,7 +305,7 @@ module.exports = {
           { payment: { $regex: new RegExp(searchQuery, "i") } },
         ];
       }
-  
+
       const total = await BookedEvents.countDocuments(query);
       const response = await BookedEvents.find(query)
         .populate("client", "username image email")
@@ -311,7 +313,7 @@ module.exports = {
         .sort({ createdAt: 1 })
         .skip(skip)
         .limit(size);
-  
+
       res.status(200).json({ detail: response, total, page, size });
     } catch (error) {
       res.status(500).json({ message: "Something went wrong" });
@@ -319,7 +321,7 @@ module.exports = {
       // next(error);
     }
   },
-  
+
   updatePaymentStatus: async (req, res, next) => {
     try {
       const book_id = req.body.id;
