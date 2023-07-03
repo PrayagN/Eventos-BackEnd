@@ -255,8 +255,7 @@ module.exports = {
           organizer.rating = 0; // or any default value you want to assign when ratingCount is zero
         }
       });
-      // console.log(rating);
-      console.log(rating);
+      
 
       const districtSet = new Set();
       organizer.forEach((organizer) => {
