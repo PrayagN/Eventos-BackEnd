@@ -265,33 +265,33 @@ module.exports = {
       const size = 1;
       const skip = (page - 1) * size;
       const searchQuery = req.query.searchQuery;
-      const query = {};
+      const query = {
+        status: true,
+        organizer: req.organizer_Id
+      };
       if (searchQuery) {
         query.$or = [
           { "client.username": { $regex: searchQuery, $options: "i" } },
           { payment: { $regex: new RegExp(searchQuery, "i") } },
         ];
       }
-      const organizer_Id = req.organizer_Id;
-      const total = await BookedEvents.find({
-        organizer: organizer_Id,
-      }).countDocuments();
-      await BookedEvents.find({ ...query, organizer: organizer_Id })
+  
+      const total = await BookedEvents.countDocuments(query);
+      const response = await BookedEvents.find(query)
         .populate("client", "username image email")
         .lean()
         .sort({ createdAt: 1 })
         .skip(skip)
-        .limit(size)
-        .then((response) => {
-          res.status(200).json({ detail: response, total, page, size });
-        })
-        .catch((error) => {
-          res.status(500).json({ message: "something went wrong" });
-        });
+        .limit(size);
+  
+      res.status(200).json({ detail: response, total, page, size });
     } catch (error) {
-      next(error);
+      res.status(500).json({ message: "Something went wrong" });
+      // Or you can pass the error to the error handling middleware using `next(error)`
+      // next(error);
     }
   },
+  
   updatePaymentStatus: async (req, res, next) => {
     try {
       const book_id = req.body.id;

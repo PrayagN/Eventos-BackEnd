@@ -251,12 +251,34 @@ module.exports = {
   },
   bookedEventsData: async (req, res, next) => {
     try {
-      const bookedEvents = await BookedEvents.find({})
-        .populate("organizer")
-        .populate("client", "-_id -password");
+      const page = Math.floor(req.query.activePage) || 1;
+      const size = Math.floor(req.query.size) || 2;
+      const skip = (page - 1) * size;
+      const searchQuery = req.query.searchQuery;
+      
+      const query = {
+          status: true,
+        };
+        if (searchQuery) {
+          query.$or = [
+            { organizerName: { $regex: searchQuery, $options: "i" } },
+            { venue: { $regex: searchQuery, $options: "i" } },
+            { district: { $regex: searchQuery, $options: "i" } },
+            { username: { $regex: searchQuery, $options: "i" } },
+            
+          ];
+        }
+        const total = await Organizers.countDocuments(query);
 
-      const necessaryData = bookedEvents.map((event) => ({
-        _id: event._id,
+        const bookedEvents = await BookedEvents.find({})
+          .populate("organizer")
+          .populate("client", "-_id -password") .lean()
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(size)
+          
+        const necessaryData = bookedEvents.map((event) => ({
+          _id: event._id,
         totalAmount: event.totalAmount,
         advanceAmount: event.advanceAmount,
         organizerName: event.organizer.organizerName,
@@ -269,7 +291,7 @@ module.exports = {
       }));
 
       if (necessaryData) {
-        res.status(200).json({ necessaryData });
+        res.status(200).json({ necessaryData, total, page, size });
       } else {
         return res
           .status(500)

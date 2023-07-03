@@ -240,7 +240,7 @@ module.exports = {
         amount: amount * 100,
       });
 
-      res.status(200).json({ message: "Successfully cancelled" });
+      res.status(200).json({ message: "Successfully cancelled and the refund amount will be credited soon!!" });
     } catch (error) {
       res.status(500).json({ message: "Something went wrong" });
       console.log(error);

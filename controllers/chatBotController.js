@@ -33,6 +33,7 @@ module.exports = {
   getConnections: async (req, res, next) => {
     try {
       const user_id = req.decoded.id;
+      
        await Connections.find({ "members.client": user_id })
         .sort({ updatedAt: -1 })
         .populate({
@@ -40,8 +41,8 @@ module.exports = {
           select: "organizerName logo",
           model: "Organizer",
         }).populate('lastMessage').then((response)=>{
-        console.log(response);
-          res.status(200).json({connections:response,status:true})
+      
+          res.status(200).json({connections:response,status:true,user_id})
         }).catch((error)=>{
           res.status(500).json({message:'internal error occurred'})
         })
@@ -53,7 +54,7 @@ module.exports = {
     try {
       const organizer_Id = req.organizer_Id
       await Connections.find({'members.organizer':organizer_Id}).sort({updatedAt:-1}).populate({path:'members.client',select:'username image',model:'User'}).then((response)=>{
-        res.status(200).json({connections:response,status:true})
+        res.status(200).json({connections:response,status:true,organizer_Id})
       }).catch((error)=>{
         res.status(500).json({message:'internal error occurred'})
       })
