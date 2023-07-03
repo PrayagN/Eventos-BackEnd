@@ -71,7 +71,7 @@ module.exports.userProtect = async (req, res, next) => {
     if (!token) {
       res
         .status(401)
-        .json({ auth: false, status: "failed", message: "You need a token" });
+        .json({ auth: false, status: "failed", message: "You need your token" });
     } else {
       jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
         if (err) {

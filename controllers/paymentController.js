@@ -38,7 +38,7 @@ module.exports = {
                   product_data: {
                     name: "Event Advance Payment",
                   },
-                  unit_amount: advance * 100,
+                  unit_amount: advance*100
                 },
                 quantity: 1,
               },
@@ -91,6 +91,7 @@ module.exports = {
   cancelPayment: async (req, res, next) => {
     try {
       const order_id = req.params.order_id;
+      const organizer_id = req.params.organizer_id
       const order = await BookedEvents.findById(order_id);
       BookedEvents.findByIdAndDelete(order_id).then((response) => {
         res.redirect(`${process.env.CLIENT_URL}/organizers/`);

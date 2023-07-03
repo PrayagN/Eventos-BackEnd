@@ -228,6 +228,34 @@ module.exports = {
       const events = await Events.find({});
       const review = await Review.find({});
       const organizer = await Organizer.find();
+      const organizers = await Organizer.aggregate([
+        {
+          $lookup: {
+            from: "reviews",
+            localField: "_id",
+            foreignField: "organizer",
+            as: "reviews"
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            reviewCount: { $size: "$reviews" },
+            ratingCount: { $sum: "$reviews.rating" }
+          }
+        }
+      ]);
+      
+      organizers.forEach((organizer) => {
+        if (organizer.ratingCount !== 0) {
+          organizer.rating = organizer.ratingCount / organizer.reviewCount;
+        } else {
+          organizer.rating = 0; // or any default value you want to assign when ratingCount is zero
+        }
+      });      
+      // console.log(rating);
+      console.log(organizers);
   
       const districtSet = new Set();
       organizer.forEach((organizer) => {

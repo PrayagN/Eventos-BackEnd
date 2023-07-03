@@ -25,8 +25,8 @@ userRoute.post('/cancel-booking',userProtect,userController.cancelBooking)
 
 
 userRoute.post('/create-checkout-session',userProtect,paymentController.checkoutPayment)
-userRoute.get('/verifyPayment/:order_id/:organizer_id',userProtect,paymentController.verifyPayment)
-userRoute.get('/cancelPayment/:order_id',userProtect,paymentController.cancelPayment)
+userRoute.get('/verifyPayment/:order_id/:organizer_id',paymentController.verifyPayment)
+userRoute.get('/cancelPayment/:order_id',paymentController.cancelPayment)
 
 // userRoute.post('/chatbot',chatBotController.chatBot)
 userRoute.post('/buildConnection',userProtect,chatBotController.chatConnection)
