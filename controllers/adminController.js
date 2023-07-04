@@ -173,7 +173,6 @@ module.exports = {
         "username image createdAt"
       );
 
-      console.log(review);
       const organizer = await Organizers.findById(id);
       if (organizer) {
         res
@@ -193,7 +192,6 @@ module.exports = {
     try {
       const { id } = req.body;
       const organizer = await Organizers.findById(id);
-      console.log(organizer);
       if (organizer.status === "false") {
         organizer.status = "true";
         await organizer.save();
@@ -283,7 +281,6 @@ module.exports = {
     const size = Math.floor(req.query.size) || 4;
     const skip = (page - 1) * size;
     const searchQuery = req.query.searchQuery;
-    console.log(searchQuery);
     const query = {};
     if (searchQuery) {
       query.$or = [

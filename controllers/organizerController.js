@@ -34,14 +34,12 @@ module.exports = {
   postSignup: async (req, res, next) => {
     try {
       let { organizerName, email, password, mobile, event } = req.body;
-      console.log(req.body);
       const eventId = (await Events.find({ title: event }, { _id: 1 }))[0]._id;
       let organizer = await Organizer.findOne({ email: email });
       if (organizer) {
         res.json({ status: false, message: "email already exists" });
       } else if (req.body.otp) {
         const password1 = await bcrypt.hash(password, 10);
-        console.log("created");
         Organizer.create({
           organizerName: organizerName,
           email: email,
@@ -62,16 +60,13 @@ module.exports = {
   },
   postSignin: async (req, res, next) => {
     try {
-      console.log(req.body);
       let organizerData = await Organizer.findOne({ email: req.body.email });
       if (organizerData) {
-        console.log("sdf");
         const passwordMatch = await bcrypt.compare(
           req.body.password,
           organizerData.password
         );
         if (passwordMatch) {
-          console.log("h");
           const organizerName = organizerData.organizerName;
           let token = jwt.sign(
             { id: organizerData._id,role:'organizer' },
@@ -114,7 +109,6 @@ module.exports = {
         }
         monthlyTotals[monthYear]+=booking.totalAmount
       });
-      console.log(monthlyTotals);
       const cancelled = await BookedEvents.find({
         organizer: organizer_Id,
         payment: "Refunded",
@@ -132,7 +126,6 @@ module.exports = {
   viewEvents: async (req, res, next) => {
     try {
       const events = await Events.find({});
-      console.log(events);
       if (events) {
         res.json({ status: true, events });
       } else {
@@ -305,7 +298,6 @@ module.exports = {
       const query = {
         organizer: req.organizer_Id,
       };
-      console.log(req.organizer_Id);
       if (searchQuery) {
         query.$or = [
           { "client.username": { $regex: searchQuery, $options: "i" } },

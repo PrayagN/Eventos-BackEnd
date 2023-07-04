@@ -1,3 +1,6 @@
+require("dotenv").config();
+const mongoose =  require("mongoose");
+mongoose.set('strictQuery',false)
 const CORS = require("cors");
 const express = require("express");
 const app = express();
@@ -13,7 +16,6 @@ const socket = require("socket.io");
 
 // Connect to MongoDB
 const dbConnect = require("./config/config");
-const env = require("dotenv").config();
 dbConnect();
 
 // Middleware
@@ -39,9 +41,12 @@ app.use("/organizer", organizerRoute);
 app.use((err, req, res, next) => {
   console.error(err.stack);
 });
+
+
 // Start the server
-const server = app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+const PORT = process.env.PORT || 3000
+const server = app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
 const io = socket(server, {

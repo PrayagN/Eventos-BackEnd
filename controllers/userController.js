@@ -11,12 +11,9 @@ module.exports = {
   userAuth: async (req, res, next) => {
     const userId = req.decoded.id;
 
-    // const exp = req.decoded.exp * 1000;
-    // const date = Date.now();
-
     try {
       const userData = await User.findById(userId, { _id: 0, password: 0 });
-      if (userData ) {
+      if (userData) {
         res.status(200).json({
           auth: true,
           userData,
@@ -62,7 +59,7 @@ module.exports = {
           // userSignup.Status = true,
           let userData = User.findOne({ email: req.body.email });
           let token = jwt.sign(
-            { id: userData._id ,role:'user' },
+            { id: userData._id, role: "user" },
             process.env.JWT_SECRET_KEY,
             {
               expiresIn: "1d",
@@ -90,7 +87,7 @@ module.exports = {
         if (passwordMatch) {
           const username = userData.username;
           let token = jwt.sign(
-            { id: userData._id ,role :'user' },
+            { id: userData._id, role: "user" },
             process.env.JWT_SECRET_KEY,
             { expiresIn: "1d" }
           );
@@ -240,11 +237,15 @@ module.exports = {
         amount: amount * 100,
       });
 
-      res.status(200).json({ message: "Successfully cancelled and the refund amount will be credited soon!!" });
+      res
+        .status(200)
+        .json({
+          message:
+            "Successfully cancelled and the refund amount will be credited soon!!",
+        });
     } catch (error) {
       res.status(500).json({ message: "Something went wrong" });
-      console.log(error);
+      next(error)
     }
   },
-  
 };

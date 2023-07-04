@@ -13,7 +13,6 @@ module.exports = {
       let date = new Date(selectedDate);
       date.setDate(date.getDate() + 1); // Add one day to the selected date
 
-      console.log(date, "selectedDate");
       const organizer = await Organizer.findById(organizer_id);
       const total = guests * organizer.budget;
       const advance = (total * organizer.advance) / 100;
