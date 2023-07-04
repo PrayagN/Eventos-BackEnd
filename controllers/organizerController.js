@@ -105,7 +105,16 @@ module.exports = {
       booked.forEach((money) => {
         totalEarning += money.totalAmount;
       });
+      const monthlyTotals = {};
+      booked.forEach((booking) => {
+        const monthYear = booking.bookedDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 
+        if (!monthlyTotals[monthYear]) {
+          monthlyTotals[monthYear] = 0;
+        }
+        monthlyTotals[monthYear]+=booking.totalAmount
+      });
+      console.log(monthlyTotals);
       const cancelled = await BookedEvents.find({
         organizer: organizer_Id,
         payment: "Refunded",
@@ -114,7 +123,7 @@ module.exports = {
         organizer: organizer_Id,
         payment: "Advance Only",
       }).count();
-      res.status(200).json({ totalBooking, cancelled, upcoming, totalEarning });
+      res.status(200).json({ totalBooking, cancelled, upcoming, totalEarning,monthlyTotals });
     } catch (error) {
       next(error);
     }
@@ -250,12 +259,11 @@ module.exports = {
       rating.forEach((organizer) => {
         if (organizer.ratingCount !== 0) {
           organizer.ratings =
-            organizer.ratingCount / (organizer.reviewCount * 5)*5;
+            (organizer.ratingCount / (organizer.reviewCount * 5)) * 5;
         } else {
           organizer.rating = 0; // or any default value you want to assign when ratingCount is zero
         }
       });
-      
 
       const districtSet = new Set();
       organizer.forEach((organizer) => {
@@ -281,7 +289,7 @@ module.exports = {
         events,
         review,
         district,
-        rating
+        rating,
       });
     } catch (error) {
       res.status(500).json({ message: "Something went wrong" });
