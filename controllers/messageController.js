@@ -4,7 +4,6 @@ const connections = require('../models/connectionModel')
 module.exports ={
     sendMessage: async (req, res, next) => {
         try {
-          console.log(req.body);
           const newMessage = new message(req.body);
           const savedMessage = await newMessage.save();
       
