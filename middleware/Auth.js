@@ -10,17 +10,23 @@ module.exports.adminProtect = async (req, res, next) => {
     } else {
       jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
         if (err) {
-          res
-            .status(401)
-            .json({
-              auth: false,
-              status: "failed",
-              message: "Failed to authenticate",
-            });
-        } else {
+          res.status(401).json({
+            auth: false,
+            status: "failed",
+            message: "Failed to authenticate",
+          });
+        } else if (
+          decoded.exp * 1000 > Date.now() &&
+          decoded.role === "admin"
+        ) {
           req.adminId = decoded.id;
-
           next();
+        }else{
+          res.status(401).json({
+            auth: false,
+            status: "failed",
+            message: "Failed to authenticate",
+          });
         }
       });
     }
@@ -41,20 +47,22 @@ module.exports.organizerProtect = async (req, res, next) => {
     } else {
       jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
         if (err) {
-          res
-            .status(401)
-            .json({
+          res.status(401).json({
+            auth: false,
+            status: "failed",
+            message: "Failed to authenticate",
+          });
+        } else if (decoded.exp * 1000 > Date.now() && decoded.role === "organizer") {
+            req.organizer_Id = decoded.id;
+            next();
+          } else {
+            res.status(401).json({
               auth: false,
               status: "failed",
               message: "Failed to authenticate",
             });
-        } else {
-          
-          req.organizer_Id = decoded.id;
-          
-
-          next();
-        }
+          }
+        
       });
     }
   } catch (error) {
@@ -67,25 +75,32 @@ module.exports.organizerProtect = async (req, res, next) => {
 module.exports.userProtect = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-    
+
     if (!token) {
-      res
-        .status(401)
-        .json({ auth: false, status: "failed", message: "You need your token" });
+      res.status(401).json({
+        auth: false,
+        status: "failed",
+        message: "You need your token",
+      });
     } else {
       jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
         if (err) {
-          res
-            .status(401)
-            .json({
+          res.status(401).json({
+            auth: false,
+            status: "failed",
+            message: "Failed to authenticate",
+          });
+        } else if (decoded.exp * 1000 > Date.now() && decoded.role === "user") {
+            req.decoded = decoded;
+            next();
+          } else {
+            res.status(401).json({
               auth: false,
               status: "failed",
               message: "Failed to authenticate",
             });
-        } else {
-          req.decoded = decoded;
-          next();
-        }
+          }
+        
       });
     }
   } catch (error) {

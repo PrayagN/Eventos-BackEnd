@@ -18,7 +18,7 @@ module.exports = {
         );
         if (passwordMatch) {
           let token = jwt.sign(
-            { id: adminData._id },
+            { id: adminData._id,role:'admin' },
             process.env.JWT_SECRET_KEY,
             { expiresIn: "5d" }
           );
@@ -278,55 +278,54 @@ module.exports = {
     }
   },
   bookedEventsData: async (req, res, next) => {
-    try {
-      const page = Math.floor(req.query.activePage) || 1;
-      const size = Math.floor(req.query.size) || 2;
-      const skip = (page - 1) * size;
-      const searchQuery = req.query.searchQuery;
-      
-      const query = {
-          status: true,
-        };
-        if (searchQuery) {
-          query.$or = [
-            { organizerName: { $regex: searchQuery, $options: "i" } },
-            { venue: { $regex: searchQuery, $options: "i" } },
-            { district: { $regex: searchQuery, $options: "i" } },
-            { username: { $regex: searchQuery, $options: "i" } },
-            
-          ];
-        }
-        const total = await Organizers.countDocuments(query);
-
-        const bookedEvents = await BookedEvents.find({})
-          .populate("organizer")
-          .populate("client", "-_id -password") .lean()
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(size)
-          
-        const necessaryData = bookedEvents.map((event) => ({
-          _id: event._id,
-        totalAmount: event.totalAmount,
-        advanceAmount: event.advanceAmount,
-        organizerName: event.organizer.organizerName,
-        clientName: event.client.username,
-        clientEmail: event.client.email,
-        event: event.organizer.event,
-        eventScheduled: event.eventScheduled,
-        bookedDate: event.bookedDate,
-        paymentStatus: event.payment,
-      }));
-
-      if (necessaryData) {
-        res.status(200).json({ necessaryData, total, page, size });
-      } else {
-        return res
-          .status(500)
-          .json({ message: "something went wrong while fetching data" });
-      }
-    } catch (error) {
-      next(error);
+  try {
+    const page = Math.floor(req.query.activePage) || 1;
+    const size = Math.floor(req.query.size) || 4;
+    const skip = (page - 1) * size;
+    const searchQuery = req.query.searchQuery;
+    console.log(searchQuery);
+    const query = {};
+    if (searchQuery) {
+      query.$or = [
+        { "organizer.organizerName": { $regex: searchQuery, $options: "i" } },
+        { venue: { $regex: searchQuery, $options: "i" } },
+        { district: { $regex: searchQuery, $options: "i" } },
+        { "client.username": { $regex: searchQuery, $options: "i" } },
+      ];
     }
-  },
+    const total = await BookedEvents.countDocuments(query);
+    
+    const bookedEvents = await BookedEvents.find(query)
+      .populate("organizer", "organizerName event")
+      .populate("client", "-_id -password")
+      
+      .lean()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(size);
+
+    const necessaryData = bookedEvents.map((event) => ({
+      _id: event._id,
+      totalAmount: event.totalAmount,
+      advanceAmount: event.advanceAmount,
+      organizerName: event.organizer.organizerName,
+      clientName: event.client.username,
+      clientEmail: event.client.email,
+      event: event.organizer.event,
+      eventScheduled: event.eventScheduled,
+      bookedDate: event.bookedDate,
+      paymentStatus: event.payment,
+    }));
+    if (necessaryData) {
+      res.status(200).json({ necessaryData, total, page, size });
+    } else {
+      return res
+        .status(500)
+        .json({ message: "something went wrong while fetching data" });
+    }
+  } catch (error) {
+    next(error);
+  }
+},
+
 };

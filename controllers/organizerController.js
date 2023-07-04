@@ -74,7 +74,7 @@ module.exports = {
           console.log("h");
           const organizerName = organizerData.organizerName;
           let token = jwt.sign(
-            { id: organizerData._id },
+            { id: organizerData._id,role:'organizer' },
             process.env.JWT_SECRET_KEY,
             {
               expiresIn: "30d",
@@ -298,14 +298,14 @@ module.exports = {
 
   bookedClients: async (req, res, next) => {
     try {
-      const page = parseInt(req.query.activePage) || 1;
-      const size = 1;
+      const page = Math.floor(req.query.activePage) || 1;
+      const size = Math.floor(req.query.size)|| 3;
       const skip = (page - 1) * size;
       const searchQuery = req.query.searchQuery;
       const query = {
-        status: true,
         organizer: req.organizer_Id,
       };
+      console.log(req.organizer_Id);
       if (searchQuery) {
         query.$or = [
           { "client.username": { $regex: searchQuery, $options: "i" } },
@@ -314,6 +314,7 @@ module.exports = {
       }
 
       const total = await BookedEvents.countDocuments(query);
+      
       const response = await BookedEvents.find(query)
         .populate("client", "username image email")
         .lean()

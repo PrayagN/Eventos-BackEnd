@@ -11,12 +11,12 @@ module.exports = {
   userAuth: async (req, res, next) => {
     const userId = req.decoded.id;
 
-    const exp = req.decoded.exp * 1000;
-    const date = Date.now();
+    // const exp = req.decoded.exp * 1000;
+    // const date = Date.now();
 
     try {
       const userData = await User.findById(userId, { _id: 0, password: 0 });
-      if (userData && exp > date) {
+      if (userData ) {
         res.status(200).json({
           auth: true,
           userData,
@@ -62,7 +62,7 @@ module.exports = {
           // userSignup.Status = true,
           let userData = User.findOne({ email: req.body.email });
           let token = jwt.sign(
-            { id: userData._id },
+            { id: userData._id ,role:'user' },
             process.env.JWT_SECRET_KEY,
             {
               expiresIn: "1d",
@@ -90,7 +90,7 @@ module.exports = {
         if (passwordMatch) {
           const username = userData.username;
           let token = jwt.sign(
-            { id: userData._id },
+            { id: userData._id ,role :'user' },
             process.env.JWT_SECRET_KEY,
             { expiresIn: "1d" }
           );
