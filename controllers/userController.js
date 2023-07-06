@@ -10,7 +10,6 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 module.exports = {
   userAuth: async (req, res, next) => {
     const userId = req.decoded.id;
-
     try {
       const userData = await User.findById(userId, { _id: 0, password: 0 });
       if (userData) {
@@ -55,9 +54,9 @@ module.exports = {
           email: req.body.email,
           password: password1,
           // mobile:mobile
-        }).then((data) => {
+        }).then(async(data) => {
           // userSignup.Status = true,
-          let userData = User.findOne({ email: req.body.email });
+          let userData = await User.findOne({ email: req.body.email });
           let token = jwt.sign(
             { id: userData._id, role: "user" },
             process.env.JWT_SECRET_KEY,
@@ -100,7 +99,33 @@ module.exports = {
         } else {
           res.json({ message: "password is incorrect", status: false });
         }
-      } else {
+      }else if (req.body.exp) {
+        const password1 = await bcrypt.hash(req.body.password, 10);
+
+        User.create({
+          username: req.body.username,
+          email: req.body.email,
+          password: password1,
+          // mobile:mobile
+        }).then(async(data) => {
+          // userSignup.Status = true,
+          let userData = await User.findOne({ email: req.body.email });
+          const username = userData.username;
+          let token = jwt.sign(
+            { id: userData._id, role: "user" },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "1d" }
+          );
+          res.json({
+            message: "Login Successful",
+            status: true,
+            token,
+          
+          });
+        })
+    }
+      
+      else {
         res.json({ message: "email does not exist", status: false });
       }
     } catch (error) {
@@ -137,38 +162,39 @@ module.exports = {
     }
   },
   bookedEvents: (req, res, next) => {
-    try {
-      const user_id = req.decoded.id;
-      const today = new Date();
-  
-      const futureEvents = BookedEvents.find({ client: user_id, eventScheduled: { $gt: today } })
-        .populate("organizer", "organizerName budget event venue");
-        
-      const pastEvents = BookedEvents.find({ client: user_id, eventScheduled: { $lt: today } })
-        .populate("organizer", "organizerName budget event venue");
-  
-      Promise.all([futureEvents, pastEvents])
-        .then(([futureResponse, pastResponse]) => {
-          const formattedFutureEvents = futureResponse.map(event => {
-            return {
-              ...event._doc,
-              eventScheduled: event.eventScheduled.toISOString() // Convert eventScheduled to ISO string format
-            };
-          });
-  
-          const formattedPastEvents = pastResponse.map(event => {
-            return {
-              ...event._doc,
-              eventScheduled: event.eventScheduled.toISOString() // Convert eventScheduled to ISO string format
-            };
-          });
-          res.status(200).json({ futureEvents: formattedFutureEvents, pastEvents: formattedPastEvents });
+  try {
+    const user_id = req.decoded.id;
+    const today = new Date();
+
+    const futureEvents = BookedEvents.find({ client: user_id, eventScheduled: { $gt: today } })
+      .populate("organizer", "organizerName budget event venue");
+      
+    const pastEvents = BookedEvents.find({ client: user_id, eventScheduled: { $lt: today } })
+      .populate("organizer", "organizerName budget event venue");
+
+    Promise.all([futureEvents, pastEvents])
+      .then(([futureResponse, pastResponse]) => {
+        const formattedFutureEvents = futureResponse.map(event => {
+          return {
+            ...event._doc,
+            eventScheduled: event.eventScheduled.toISOString() // Convert eventScheduled to ISO string format
+          };
         });
-    } catch (error) {
-      next(error);
-    }
-  },
-  
+
+        const formattedPastEvents = pastResponse.map(event => {
+          return {
+            ...event._doc,
+            eventScheduled: event.eventScheduled.toISOString() // Convert eventScheduled to ISO string format
+          };
+        });
+
+        res.status(200).json({ futureEvents: formattedFutureEvents, pastEvents: formattedPastEvents });
+      });
+  } catch (error) {
+    next(error);
+  }
+},
+
   
   reviewOrganizer: async (req, res, next) => {
     try {
