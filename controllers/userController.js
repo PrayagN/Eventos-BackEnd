@@ -139,16 +139,37 @@ module.exports = {
   bookedEvents: (req, res, next) => {
     try {
       const user_id = req.decoded.id;
-
-      BookedEvents.find({ client: user_id })
-        .populate("organizer", "organizerName budget event venue")
-        .then((response) => {
-          res.status(200).json({ essentialData: response });
+      const today = new Date();
+  
+      const futureEvents = BookedEvents.find({ client: user_id, eventScheduled: { $gt: today } })
+        .populate("organizer", "organizerName budget event venue");
+        
+      const pastEvents = BookedEvents.find({ client: user_id, eventScheduled: { $lt: today } })
+        .populate("organizer", "organizerName budget event venue");
+  
+      Promise.all([futureEvents, pastEvents])
+        .then(([futureResponse, pastResponse]) => {
+          const formattedFutureEvents = futureResponse.map(event => {
+            return {
+              ...event._doc,
+              eventScheduled: event.eventScheduled.toISOString() // Convert eventScheduled to ISO string format
+            };
+          });
+  
+          const formattedPastEvents = pastResponse.map(event => {
+            return {
+              ...event._doc,
+              eventScheduled: event.eventScheduled.toISOString() // Convert eventScheduled to ISO string format
+            };
+          });
+          res.status(200).json({ futureEvents: formattedFutureEvents, pastEvents: formattedPastEvents });
         });
     } catch (error) {
       next(error);
     }
   },
+  
+  
   reviewOrganizer: async (req, res, next) => {
     try {
       const { id } = req.body;
