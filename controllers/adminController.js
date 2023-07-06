@@ -60,9 +60,10 @@ module.exports = {
 
   loadDashboard: async (req, res, next) => {
     try {
+      const booked = await BookedEvents.find()
       const bookedEvents = await BookedEvents.find()
         .populate("organizer", "-id -password")
-        .populate("client", "-_id -password");
+        .populate("client", "-_id -password").sort({createdAt:-1}).limit(5)
       const bookedData = bookedEvents.map((event) => ({
         totalAmount: event.totalAmount,
         advanceAmount: event.advanceAmount,
@@ -74,7 +75,7 @@ module.exports = {
       }));
 
       let totalEarning = 0;
-      bookedEvents.forEach((money) => {
+      booked.forEach((money) => {
         totalEarning += money.totalAmount;
       });
 
@@ -211,6 +212,7 @@ module.exports = {
       const page = Math.floor(req.body.activePage) || 1;
       const size = Math.floor(req.body.size) || 2;
       const skip = (page - 1) * size;
+      const selectedDistrict =req.body.selectedDistrict;
       const searchQuery = req.body.searchQuery;
 
       const query = {
@@ -223,11 +225,14 @@ module.exports = {
           { district: { $regex: searchQuery, $options: "i" } },
         ];
       }
-
+      if (selectedDistrict) {
+        query.district = selectedDistrict;
+      }
       const event = await Event.findById(id);
       
       const eventPhoto = event?.image;
       const total = await Organizers.countDocuments({ ...query, eventId: id });
+      const organizer = await Organizers.find({eventId:id})
       const rating = await Organizers.aggregate([
         {
           $lookup: {
@@ -255,6 +260,12 @@ module.exports = {
           organizer.rating = 0; // or any default value you want to assign when ratingCount is zero
         }
       });
+      const districtSet = new Set();
+      organizer.forEach((organizer) => {
+        districtSet.add(organizer.district);
+      });
+      const district = Array.from(districtSet);
+      
       await Organizers.find(
         { ...query, status: true, eventId: id },
         { password: 0, status: 0 }
@@ -266,7 +277,7 @@ module.exports = {
         .then((response) => {
           res
             .status(200)
-            .json({ organizers: response, total, page, size, eventPhoto,rating });
+            .json({ organizers: response, total, page, size, eventPhoto,rating ,district });
         })
         .catch((error) => {
           res.status(500).json({ message: "something went wrong" });
@@ -288,6 +299,7 @@ module.exports = {
         { venue: { $regex: searchQuery, $options: "i" } },
         { district: { $regex: searchQuery, $options: "i" } },
         { "client.username": { $regex: searchQuery, $options: "i" } },
+        { payment: { $regex: searchQuery, $options: "i" } },
       ];
     }
     const total = await BookedEvents.countDocuments(query);
