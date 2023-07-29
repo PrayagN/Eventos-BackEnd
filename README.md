@@ -41,12 +41,14 @@ npm (v6 or above)
 # Getting Started
 1. Clone this repository to your local machine:
 
-       git clone Eventos-FrontEnd
+       git clone Eventos-BackEnd
+
 
 
 3. Navigate to the project directory:
 
-       cd Eventos-FrontEnd
+       cd Eventos-BackEnd
+
 
 
 3. Install the dependencies:
