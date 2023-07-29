@@ -36,8 +36,9 @@ Live link: https://eventoss.netlify.app/
 
 Before you can run the app, make sure you have the following installed on your machine:
 
-Node.js (v12 or above)
-npm (v6 or above)
+- Node.js (v12 or above)
+
+- npm (v6 or above)
 # Getting Started
 1. Clone this repository to your local machine:
 
